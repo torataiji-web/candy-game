@@ -1876,7 +1876,7 @@ function showHelp(isFirstTime) {
       <p>4種類のクリア条件が <b>ステージごとに循環</b> します:</p>
       <p>・<b>🎯 スコア</b>: 指定ポイントを稼ぐにゃ</p>
       <p>・<b>🟦 ゼリー消去</b>: 盤面の青いタイル（ゼリー）の上の猫を消して、すべてのゼリーを破壊する。濃い青は2回当てないと消えないにゃ</p>
-      <p>・<b>🐟 材料</b>: 🐟🥛を最下段まで落として収集する（特殊もるちゃんの爆発でも消えないにゃ）</p>
+      <p>・<b>🎀 材料</b>: 🎀🥛を最下段まで落として収集する（特殊もるちゃんの爆発でも消えないにゃ）</p>
       <p>・<b>🎨 注文</b>: 指定された色の猫を指定匹数消すにゃ</p>
       <p>どのミッションも <b>残り手数</b> 以内に達成すれば次のステージへ。失敗ならゲームオーバーにゃ。</p>
 
@@ -1992,7 +1992,7 @@ function restartGame() {
 
 // ===== ミッション（クリア条件） =====
 const MISSION_CYCLE = ['score', 'jelly', 'ingredient', 'order'];
-const INGREDIENT_SYMBOLS = ['🐟', '🥛'];
+const INGREDIENT_SYMBOLS = ['🎀', '🥛'];
 let mission = null;
 let jellyGrid = [];
 let totalJellyRemaining = 0;
@@ -2133,7 +2133,7 @@ function missionLabel() {
   if (!mission) return '';
   if (mission.type === 'score') return `🎯 目標 <span>${target}</span>`;
   if (mission.type === 'jelly') return `🟦 ゼリー <span>${totalJellyRemaining}</span>`;
-  if (mission.type === 'ingredient') return `🍒 材料 <span>${ingredientsCollected}/${ingredientsToCollect}</span>`;
+  if (mission.type === 'ingredient') return `🎀 材料 <span>${ingredientsCollected}/${ingredientsToCollect}</span>`;
   if (mission.type === 'order') {
     const parts = orders.map(o => `<span style="color:${COLORS[o.color]}">${SYMBOLS[o.color]}</span><b>${o.collected}/${o.target}</b>`);
     return `集める ${parts.join(' ')}`;
@@ -2270,7 +2270,7 @@ function missionIntroText() {
   if (!mission) return '';
   if (mission.type === 'score')      return `😺 ${target} にゃん分稼ぐにゃ！`;
   if (mission.type === 'jelly')      return `😸 ゼリー ${totalJellyRemaining} 個 全部にゃー！`;
-  if (mission.type === 'ingredient') return `🐟 ${ingredientsToCollect} 個 下まで落とすにゃ！`;
+  if (mission.type === 'ingredient') return `🎀 ${ingredientsToCollect} 個 下まで落とすにゃ！`;
   if (mission.type === 'order') {
     const parts = orders.map(o => `${SYMBOLS[o.color]}×${o.target}`);
     return `😻 集めるにゃ！: ${parts.join(' ')}`;
