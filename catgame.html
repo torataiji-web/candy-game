@@ -859,6 +859,8 @@ function onCandyClick(el) {
   if (busy) return;
   const pos = findPos(el);
   if (!pos) return;
+  // 材料は直接選択不可（隣のキャンディで押し出す）
+  if (grid[pos.r][pos.c] && grid[pos.r][pos.c].ingredient) return;
 
   if (!selected) {
     selected = pos;
@@ -2520,6 +2522,8 @@ function onBoardPointerDown(e) {
   if (!el) return;
   const pos = findPos(el);
   if (!pos) return;
+  // 材料は直接ドラッグ不可
+  if (grid[pos.r][pos.c] && grid[pos.r][pos.c].ingredient) return;
   cancelIdleAndHint();
   ensureAudio();
   if (audioCtx && audioCtx.state === 'suspended') {
