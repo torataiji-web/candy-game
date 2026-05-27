@@ -1758,23 +1758,23 @@ function stageData(n) {
   const tier = Math.floor((n - 1) / MISSION_CYCLE.length) + 1;
   let d;
   if (type === 'score') {
-    d = { type, target: 1500 + (tier - 1) * 1500, moves: Math.max(20, 30 - tier) };
+    d = { type, target: 2000 + (tier - 1) * 1500, moves: Math.max(18, 28 - tier) };
   } else if (type === 'jelly') {
     d = {
       type,
-      jellyCount: Math.min(6 + tier * 3, 30),
+      jellyCount: Math.min(8 + tier * 3, 30),
       jellyDouble: tier >= 2 ? Math.min(tier * 2, 8) : 0,
-      moves: 24 + tier * 2,
+      moves: 22 + tier * 2,
     };
   } else if (type === 'ingredient') {
-    d = { type, ingredientTarget: Math.min(2 + tier, 6), moves: 26 + tier * 2 };
+    d = { type, ingredientTarget: Math.min(2 + tier, 6), moves: 24 + tier * 2 };
   } else if (type === 'order') {
-    d = { type, orders: generateOrders(tier), moves: 25 + tier };
+    d = { type, orders: generateOrders(tier), moves: 23 + tier };
   } else {
-    d = { type: 'score', target: 1500, moves: 25 };
+    d = { type: 'score', target: 2000, moves: 23 };
   }
-  // 障害物（tier 2以降に出現、本家準拠）
-  if (tier >= 2) d.chocolates = Math.min(1 + Math.floor((tier - 1) / 2), 4);
+  // 障害物（tier 1からチョコ1個、tier 2以降増加）
+  if (tier >= 1) d.chocolates = Math.min(1 + Math.floor(tier / 2), 4);
   if (tier >= 3) d.marmalades = Math.min(2 + Math.floor((tier - 2) / 2), 6);
   return d;
 }
