@@ -2378,7 +2378,7 @@ async function shuffleBoardIfStuck() {
 async function sugarCrushBonus() {
   const remaining = movesLimit - movesUsed;
   if (remaining <= 0) return;
-  showCombo('🐱 ニャー CRUSH！！');
+  showCombo('🐱 やばいにゃー！！');
   playClear();
   await sleep(900);
   const specialTypes = ['stripeRow', 'stripeCol', 'wrapped'];
