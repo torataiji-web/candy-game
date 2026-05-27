@@ -1,0 +1,2663 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CAT GAME</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cell: 52px;
+  --gap: 5px;
+  --cols: 8;
+  --rows: 8;
+}
+@media (max-width: 520px) {
+  :root { --cell: 38px; --gap: 4px; }
+}
+@media (max-width: 420px) {
+  :root { --cell: 34px; --gap: 3px; }
+  body { padding: 8px; }
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: 'Fredoka', 'Hiragino Sans', system-ui, sans-serif;
+  color: white;
+  background:
+    radial-gradient(circle at 20% 10%, #ff6ec7 0%, transparent 40%),
+    radial-gradient(circle at 80% 20%, #6ec1ff 0%, transparent 40%),
+    radial-gradient(circle at 60% 90%, #ffd56e 0%, transparent 40%),
+    linear-gradient(135deg, #4a148c 0%, #311b92 50%, #1a237e 100%);
+  background-attachment: fixed;
+  padding: 16px;
+  overflow-x: hidden;
+}
+
+h1 {
+  font-size: clamp(1.6em, 5vw, 2.4em);
+  margin: 0 0 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  background: linear-gradient(45deg, #fff 20%, #ffeebb 50%, #ffb8d8 80%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 4px 16px rgba(255,180,220,0.4));
+}
+
+.hud {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 600px;
+}
+.hud-item {
+  background: rgba(255,255,255,0.14);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,255,255,0.22);
+  padding: 7px 14px;
+  border-radius: 12px;
+  font-size: 0.95em;
+  font-weight: 600;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+.hud-item span { font-weight: 700; }
+.hud-item.target { color: #ffe066; }
+.hud-item.warn span { color: #ff7b7b; }
+
+.board-wrap {
+  background: rgba(255,255,255,0.10);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 2px solid rgba(255,255,255,0.25);
+  border-radius: 22px;
+  padding: 12px;
+  box-shadow:
+    0 25px 70px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.3);
+  position: relative; /* combo-display の基準 */
+}
+
+.board {
+  position: relative;
+  width: calc(var(--cell) * var(--cols) + var(--gap) * (var(--cols) + 1));
+  height: calc(var(--cell) * var(--rows) + var(--gap) * (var(--rows) + 1));
+  background: rgba(0,0,0,0.22);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: inset 0 4px 16px rgba(0,0,0,0.3);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.candy {
+  position: absolute;
+  width: var(--cell);
+  height: var(--cell);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: left 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+              top 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.18s,
+              filter 0.18s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--cell) * 0.60);
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  user-select: none;
+  -webkit-user-select: none;
+}
+.candy::before {
+  content: '';
+  position: absolute;
+  top: 12%;
+  left: 18%;
+  width: 32%;
+  height: 22%;
+  background: radial-gradient(ellipse, rgba(255,255,255,0.85), rgba(255,255,255,0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 2;
+}
+.candy:hover { transform: scale(1.06); }
+
+.c0 { background: radial-gradient(circle at 32% 30%, #ff9d9d 0%, #e63946 55%, #a4161a 100%);
+      box-shadow: 0 5px 12px rgba(230,57,70,0.55), inset -4px -6px 10px rgba(0,0,0,0.25), 0 0 18px rgba(230,57,70,0.35); }
+.c1 { background: radial-gradient(circle at 32% 30%, #ffd6a5 0%, #fb8500 55%, #c44900 100%);
+      box-shadow: 0 5px 12px rgba(251,133,0,0.55), inset -4px -6px 10px rgba(0,0,0,0.25), 0 0 18px rgba(251,133,0,0.35); }
+.c2 { background: radial-gradient(circle at 32% 30%, #fff5a3 0%, #ffd60a 55%, #b8860b 100%);
+      box-shadow: 0 5px 12px rgba(255,214,10,0.55), inset -4px -6px 10px rgba(0,0,0,0.25), 0 0 18px rgba(255,214,10,0.45); }
+.c3 { background: radial-gradient(circle at 32% 30%, #b7efc5 0%, #2dc653 55%, #157145 100%);
+      box-shadow: 0 5px 12px rgba(45,198,83,0.55), inset -4px -6px 10px rgba(0,0,0,0.25), 0 0 18px rgba(45,198,83,0.35); }
+.c4 { background: radial-gradient(circle at 32% 30%, #a8d8ff 0%, #2196f3 55%, #0d47a1 100%);
+      box-shadow: 0 5px 12px rgba(33,150,243,0.55), inset -4px -6px 10px rgba(0,0,0,0.25), 0 0 18px rgba(33,150,243,0.35); }
+.c5 { background: radial-gradient(circle at 32% 30%, #e0b3ff 0%, #9d4edd 55%, #5a189a 100%);
+      box-shadow: 0 5px 12px rgba(157,78,221,0.55), inset -4px -6px 10px rgba(0,0,0,0.25), 0 0 18px rgba(157,78,221,0.45); }
+
+/* 猫テーマ：全キャンディをまん丸に統一 */
+
+/* ===== ゼリー（クリア対象マス） ===== */
+.jelly-cell {
+  position: absolute;
+  width: var(--cell);
+  height: var(--cell);
+  border-radius: 10px;
+  background: rgba(180, 220, 255, 0.18);
+  border: 2px dashed rgba(180, 220, 255, 0.5);
+  pointer-events: none;
+  z-index: 0;
+  box-shadow: inset 0 0 8px rgba(180, 220, 255, 0.3);
+}
+.jelly-cell.l2 {
+  background: rgba(120, 180, 255, 0.4);
+  border: 2px solid rgba(120, 180, 255, 0.75);
+  box-shadow: inset 0 0 12px rgba(120, 180, 255, 0.6),
+              0 0 8px rgba(120, 180, 255, 0.4);
+}
+.jelly-cell.broken {
+  animation: jellyBreak 0.5s forwards;
+}
+@keyframes jellyBreak {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* ===== 材料 ===== */
+.candy.ingredient {
+  background: radial-gradient(circle at 32% 30%, #ffeebb 0%, #d4a76a 55%, #8b5a2b 100%) !important;
+  box-shadow: 0 6px 14px rgba(139, 90, 43, 0.6),
+              inset -4px -6px 10px rgba(0,0,0,0.3),
+              0 0 16px rgba(218, 165, 32, 0.5) !important;
+  border-radius: 36% !important;
+  font-size: calc(var(--cell) * 0.7) !important;
+  animation: ingredientGlow 1.5s ease-in-out infinite;
+  cursor: not-allowed;
+}
+@keyframes ingredientGlow {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.3) drop-shadow(0 0 10px gold); }
+}
+.candy.ingredient-collected {
+  animation: ingredientCollect 0.55s ease-in forwards !important;
+  z-index: 5;
+}
+@keyframes ingredientCollect {
+  0%   { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
+  50%  { transform: translateY(20px) scale(1.4) rotate(-10deg); filter: brightness(1.6); }
+  100% { transform: translateY(60px) scale(0.3) rotate(20deg); opacity: 0; }
+}
+
+/* ===== フィッシュ（2x2スペシャル） ===== */
+.candy.s-fish {
+  font-size: calc(var(--cell) * 0.66) !important;
+  animation: fishWobble 1.4s ease-in-out infinite;
+}
+.candy.s-fish::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  border: 3px solid rgba(100, 220, 255, 0.85);
+  box-shadow: 0 0 14px rgba(100, 220, 255, 0.7),
+              inset 0 0 10px rgba(100, 220, 255, 0.5);
+  animation: fishGlow 1.4s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+@keyframes fishGlow {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.05); box-shadow: 0 0 22px cyan, inset 0 0 14px rgba(100, 220, 255, 0.7); }
+}
+@keyframes fishWobble {
+  0%, 100% { transform: rotate(-6deg); }
+  50%      { transform: rotate(6deg); }
+}
+
+/* ===== ストライプ風エフェクト ===== */
+.stripe-sweep-h {
+  position: absolute;
+  left: 0;
+  height: calc(var(--cell) + var(--gap));
+  width: 100%;
+  pointer-events: none;
+  z-index: 50;
+  animation: sweepH 0.52s linear forwards;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255,255,200,0.55) 40%,
+    rgba(255,255,255,0.95) 50%,
+    rgba(255,255,200,0.55) 60%,
+    transparent 100%
+  );
+  filter: blur(2px);
+}
+@keyframes sweepH {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0% 0 0); }
+}
+
+.stripe-sweep-v {
+  position: absolute;
+  top: 0;
+  width: calc(var(--cell) + var(--gap));
+  height: 100%;
+  pointer-events: none;
+  z-index: 50;
+  animation: sweepV 0.52s linear forwards;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(255,255,200,0.55) 40%,
+    rgba(255,255,255,0.95) 50%,
+    rgba(255,255,200,0.55) 60%,
+    transparent 100%
+  );
+  filter: blur(2px);
+}
+@keyframes sweepV {
+  from { clip-path: inset(0 0 100% 0); }
+  to   { clip-path: inset(0 0 0% 0); }
+}
+
+.fish-flight {
+  position: absolute;
+  width: var(--cell);
+  height: var(--cell);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--cell) * 0.78);
+  pointer-events: none;
+  z-index: 60;
+  filter: drop-shadow(0 0 14px cyan) drop-shadow(0 0 6px white);
+  /* アニメーションは JS (Web Animations API) で制御 */
+}
+
+/* ===== 障害物 ===== */
+/* チョコレート（自己増殖） */
+.candy.obstacle-chocolate {
+  background:
+    radial-gradient(circle at 30% 25%, #a87142 0%, transparent 40%),
+    radial-gradient(circle at 70% 70%, #5d3a1e 0%, #2d1a0e 100%) !important;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5),
+              inset -3px -4px 8px rgba(0,0,0,0.5),
+              inset 3px 3px 6px rgba(255,200,150,0.2) !important;
+  border-radius: 18% !important;
+  font-size: calc(var(--cell) * 0.65) !important;
+  cursor: not-allowed;
+  color: rgba(255, 220, 180, 0.85) !important;
+}
+.candy.obstacle-chocolate::before { display: none; }
+.candy.obstacle-chocolate.spread-in {
+  animation: spreadIn 0.45s ease-out;
+}
+@keyframes spreadIn {
+  0% { transform: scale(0) rotate(180deg); opacity: 0; }
+  60% { transform: scale(1.3) rotate(15deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* マーマレード（殻に閉じ込められたキャンディ） */
+.candy.marmalade::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 165, 0, 0.55), rgba(255, 100, 50, 0.4));
+  border: 3px solid rgba(255, 200, 100, 0.85);
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 3;
+  box-shadow: inset 0 0 8px rgba(255, 200, 100, 0.6);
+  animation: marmaladePulse 1.6s ease-in-out infinite;
+}
+@keyframes marmaladePulse {
+  0%, 100% { opacity: 0.75; }
+  50%      { opacity: 1; }
+}
+.candy.marmalade.breaking::after {
+  animation: marmaladeBreak 0.45s forwards !important;
+}
+@keyframes marmaladeBreak {
+  0%   { opacity: 0.8; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.6); filter: blur(4px); }
+}
+
+/* スター評価表示 */
+.stage-stars {
+  font-size: 2.6em;
+  margin: 10px 0 16px;
+  letter-spacing: 10px;
+  filter: drop-shadow(0 0 14px gold);
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+.stage-stars .star {
+  display: inline-block;
+  animation: starPop 0.5s ease-out forwards;
+  opacity: 0;
+  transform: scale(0);
+}
+.stage-stars .star.s1 { animation-delay: 0.1s; }
+.stage-stars .star.s2 { animation-delay: 0.35s; }
+.stage-stars .star.s3 { animation-delay: 0.6s; }
+.stage-stars .star.empty { color: rgba(255,255,255,0.25); filter: none; }
+@keyframes starPop {
+  0%   { opacity: 0; transform: scale(0) rotate(-180deg); }
+  60%  { opacity: 1; transform: scale(1.4) rotate(15deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+/* シャッフル時の演出 */
+.candy.shuffling {
+  animation: shuffleSpin 0.6s ease-in-out;
+}
+@keyframes shuffleSpin {
+  0% { transform: rotate(0) scale(1); }
+  40% { transform: rotate(180deg) scale(0.65); filter: brightness(1.5) drop-shadow(0 0 12px white); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+#muteBtn {
+  padding: 10px 16px;
+  min-width: 54px;
+  font-size: 1.2em;
+}
+
+/* ===== スペシャルキャンディ（本家参考デザイン）===== */
+
+/* ----- ストライプキャンディ（横/縦）太縞2本 ----- */
+.candy.s-stripeRow,
+.candy.s-stripeCol {
+  border-radius: 42% !important;
+  filter: brightness(1.08) saturate(1.12);
+}
+.candy.s-stripeRow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  /* 横向き白縞2本、間は少し暗くしてキャンディ色を強調 */
+  background: linear-gradient(
+    180deg,
+    transparent              0%,  transparent              20%,
+    rgba(255,255,255,0.82)  20%, rgba(255,255,255,0.82)  37%,
+    rgba(0,0,0,0.06)        37%, rgba(0,0,0,0.06)        63%,
+    rgba(255,255,255,0.82)  63%, rgba(255,255,255,0.82)  80%,
+    transparent              80%, transparent             100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+.candy.s-stripeCol::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  /* 縦向き白縞2本 */
+  background: linear-gradient(
+    90deg,
+    transparent              0%,  transparent              20%,
+    rgba(255,255,255,0.82)  20%, rgba(255,255,255,0.82)  37%,
+    rgba(0,0,0,0.06)        37%, rgba(0,0,0,0.06)        63%,
+    rgba(255,255,255,0.82)  63%, rgba(255,255,255,0.82)  80%,
+    transparent              80%, transparent             100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ----- ラッピングキャンディ（ギフトボックス＋十字リボン）----- */
+.candy.s-wrapped {
+  border-radius: 20% !important;
+  animation: pulseWrap 1.4s ease-in-out infinite;
+}
+.candy.s-wrapped::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  /* 横リボン帯 + 縦リボン帯 = 十字 */
+  background:
+    linear-gradient(180deg,
+      transparent 36%, rgba(255,255,255,0.60) 36%,
+      rgba(255,255,255,0.60) 64%, transparent 64%),
+    linear-gradient( 90deg,
+      transparent 36%, rgba(255,255,255,0.60) 36%,
+      rgba(255,255,255,0.60) 64%, transparent 64%);
+  /* 外枠の細いリボンライン */
+  box-shadow: inset 0 0 0 2.5px rgba(255,255,255,0.42);
+  pointer-events: none;
+  z-index: 1;
+}
+@keyframes pulseWrap {
+  0%, 100% { filter: drop-shadow(0 0 5px rgba(255,255,255,0.55)); }
+  50%      { filter: drop-shadow(0 0 18px gold) brightness(1.22); }
+}
+
+/* ----- カラーボム（黒球＋6色スパークルドット）----- */
+.candy.s-colorbomb {
+  background: radial-gradient(circle at 35% 28%, #1e1e3a 0%, #07070f 75%) !important;
+  border-radius: 50% !important;
+  box-shadow:
+    0 0 0 2.5px rgba(140,70,230,0.75),
+    0 0 22px rgba(140,70,230,0.55),
+    0 5px 14px rgba(0,0,0,0.65),
+    inset -3px -4px 10px rgba(0,0,0,0.75) !important;
+  animation: cbPulse 2s ease-in-out infinite;
+  font-size: calc(var(--cell) * 0.28) !important;
+  color: rgba(255,255,255,0.40) !important;
+}
+.candy.s-colorbomb::before {
+  background: radial-gradient(ellipse, rgba(255,255,255,0.32), transparent 62%) !important;
+}
+.candy.s-colorbomb::after {
+  content: '';
+  position: absolute;
+  inset: 5%;
+  border-radius: 50%;
+  /* 6色のスパークルドット */
+  background:
+    radial-gradient(circle at 22% 27%, #ff4a6e  0%, rgba(230, 57, 70,0.85)  9%, transparent 19%),
+    radial-gradient(circle at 76% 22%, #ffb347  0%, rgba(251,133,  0,0.85)  8%, transparent 17%),
+    radial-gradient(circle at 80% 70%, #ffe94d  0%, rgba(255,214, 10,0.85)  8%, transparent 16%),
+    radial-gradient(circle at 44% 84%, #44e87a  0%, rgba( 45,198, 83,0.85)  8%, transparent 17%),
+    radial-gradient(circle at 18% 72%, #5bb8ff  0%, rgba( 33,150,243,0.85)  9%, transparent 18%),
+    radial-gradient(circle at 58% 44%, #cc80ff  0%, rgba(157, 78,221,0.85)  7%, transparent 15%);
+  animation: cbSparkle 2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+@keyframes cbPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 2.5px rgba(140, 70,230,0.75),
+      0 0 22px rgba(140, 70,230,0.50),
+      0 5px 14px rgba(0,0,0,0.65),
+      inset -3px -4px 10px rgba(0,0,0,0.75);
+  }
+  50% {
+    box-shadow:
+      0 0 0 2.5px rgba(210,130,255,1.0),
+      0 0 38px rgba(200,120,255,0.85),
+      0 0 65px rgba( 80,180,255,0.30),
+      0 5px 14px rgba(0,0,0,0.65),
+      inset -3px -4px 10px rgba(0,0,0,0.75);
+  }
+}
+@keyframes cbSparkle {
+  0%, 100% { opacity: 0.85; transform: rotate(0deg)  scale(1);    }
+  50%      { opacity: 1;    transform: rotate(60deg) scale(1.06); }
+}
+
+.candy.selected {
+  z-index: 5;
+  animation: wobble 0.5s ease-in-out infinite;
+  filter: brightness(1.3) drop-shadow(0 0 10px white);
+}
+
+.candy.hint {
+  animation: hintPulse 0.65s ease-in-out infinite;
+  z-index: 4;
+}
+@keyframes hintPulse {
+  0%, 100% { filter: brightness(1); transform: scale(1); }
+  50% { filter: brightness(1.7) drop-shadow(0 0 14px white) drop-shadow(0 0 22px gold);
+        transform: scale(1.15); }
+}
+@keyframes wobble {
+  0%, 100% { transform: scale(1.18) rotate(-5deg); }
+  50% { transform: scale(1.18) rotate(5deg); }
+}
+
+.candy.popping {
+  animation: pop 0.60s ease-out forwards !important;
+  pointer-events: none;
+  z-index: 3;
+}
+@keyframes pop {
+  0%   { transform: scale(1);                opacity: 1; }
+  35%  { transform: scale(1.6) rotate(20deg); opacity: 1; filter: brightness(2.4) saturate(1.7); }
+  100% { transform: scale(0) rotate(230deg);  opacity: 0; }
+}
+
+.candy.falling {
+  transition: top 0.62s cubic-bezier(0.34, 1.2, 0.6, 1),
+              left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.particle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: particle 0.8s ease-out forwards;
+  box-shadow: 0 0 8px currentColor;
+}
+@keyframes particle {
+  0% { opacity: 1; transform: translate(0,0) scale(1.3); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.1); }
+}
+
+.score-popup {
+  position: absolute;
+  font-weight: 800;
+  font-size: 1.25em;
+  color: #fff;
+  text-shadow: 0 0 8px #ffd60a, 0 2px 6px rgba(0,0,0,0.6);
+  pointer-events: none;
+  animation: scorePop 1s ease-out forwards;
+  white-space: nowrap;
+  z-index: 50;
+}
+@keyframes scorePop {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+  25% { opacity: 1; transform: translate(-50%, -130%) scale(1.3); }
+  100% { opacity: 0; transform: translate(-50%, -280%) scale(1); }
+}
+
+.combo-display {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(1.6em, 6vw, 3em);
+  font-weight: 800;
+  color: white;
+  text-shadow:
+    0 0 20px #ffd60a,
+    0 0 40px #ff6ec7,
+    0 4px 12px rgba(0,0,0,0.5);
+  pointer-events: none;
+  opacity: 0;
+  white-space: normal;       /* 長いテキストは折り返す */
+  text-align: center;
+  max-width: 94%;            /* board-wrap 幅に収まるよう制限 */
+  word-break: keep-all;
+  z-index: 200;              /* board の overflow:hidden の外に出るので十分な z-index */
+}
+.combo-display.show { animation: comboShow 1.1s ease-out forwards; }
+@keyframes comboShow {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3) rotate(-20deg); }
+  20% { opacity: 1; transform: translate(-50%, -50%) scale(1.4) rotate(8deg); }
+  70% { opacity: 1; transform: translate(-50%, -50%) scale(1.1) rotate(0deg); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5) rotate(0deg); }
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+button {
+  padding: 10px 22px;
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.18);
+  backdrop-filter: blur(10px);
+  color: white;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+button:hover {
+  background: rgba(255,255,255,0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+}
+button:active { transform: translateY(0); }
+button.primary {
+  background: linear-gradient(135deg, #ff6ec7, #9d4edd);
+  border-color: rgba(255,255,255,0.4);
+}
+button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
+
+.footer {
+  margin-top: 12px;
+  font-size: 0.78em;
+  opacity: 0.6;
+  text-align: center;
+  max-width: 460px;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 5, 30, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.overlay.show { display: flex; }
+.overlay-box {
+  background: linear-gradient(135deg, rgba(255,255,255,0.22), rgba(255,255,255,0.08));
+  border: 2px solid rgba(255,255,255,0.35);
+  border-radius: 24px;
+  padding: 32px 44px;
+  text-align: center;
+  box-shadow: 0 25px 70px rgba(0,0,0,0.6);
+  animation: overlayIn 0.55s cubic-bezier(0.34, 1.5, 0.6, 1);
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.help-content {
+  text-align: left;
+  font-size: 0.95em;
+  line-height: 1.7;
+  max-width: 440px;
+  margin: 0 auto;
+}
+.help-content p { margin: 4px 0; }
+.help-content .step {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 8px 0;
+}
+.help-content .step-num {
+  flex-shrink: 0;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff6ec7, #9d4edd);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800;
+  font-size: 0.9em;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.help-content hr {
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.25);
+  margin: 14px 0 10px;
+}
+.help-content b { color: #ffe066; }
+.help-content .section-title {
+  font-weight: 700;
+  font-size: 1.05em;
+  margin: 6px 0 4px;
+  color: #ffd6f0;
+}
+.help-content .candy-demo {
+  display: inline-block;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  vertical-align: middle;
+  margin: 0 3px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+@keyframes overlayIn {
+  0% { transform: scale(0.4) rotate(-12deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+.overlay-title {
+  font-size: 1.9em;
+  font-weight: 800;
+  margin-bottom: 14px;
+  background: linear-gradient(45deg, #fff, #ffeebb, #ffb8d8);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 8px rgba(255,180,220,0.5));
+}
+.overlay-detail {
+  font-size: 1em;
+  margin-bottom: 20px;
+  opacity: 0.92;
+  line-height: 1.5;
+}
+</style>
+</head>
+<body>
+<h1>🐱 CAT GAME 🐱</h1>
+<div class="hud">
+  <div class="hud-item">ステージ <span id="stage">1</span></div>
+  <div class="hud-item target" id="mission">ミッション</div>
+  <div class="hud-item">スコア <span id="score">0</span></div>
+  <div class="hud-item warn">残り手数 <span id="moves">0</span></div>
+  <div class="hud-item">最高連鎖 <span id="best-combo">0</span></div>
+</div>
+<div class="board-wrap">
+  <div class="board" id="board"></div>
+  <div class="combo-display" id="combo"></div>
+</div>
+<div class="controls">
+  <button class="primary" onclick="showHelp(false)">📖 遊び方</button>
+  <button onclick="restartGame()">🔄 最初から</button>
+  <button id="muteBtn" onclick="toggleMute()" title="サウンドon/off">🔊</button>
+</div>
+<div class="footer">
+  💡 キャンディを<b>ドラッグ</b>して入れ替え（クリック→隣をクリックでも可）／無操作が続くとヒント点滅
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="overlay-box">
+    <div class="overlay-title" id="overlay-title"></div>
+    <div class="overlay-detail" id="overlay-detail"></div>
+    <button class="primary" id="overlay-btn">次へ</button>
+  </div>
+</div>
+
+<script>
+const COLS = 8;
+const ROWS = 8;
+const TYPES = 6;
+const SYMBOLS = ['😾', '😸', '😹', '😺', '😻', '🙀'];
+const COLORS = ['#e63946', '#fb8500', '#ffd60a', '#2dc653', '#2196f3', '#9d4edd'];
+
+const boardEl = document.getElementById('board');
+const stageEl = document.getElementById('stage');
+const scoreEl = document.getElementById('score');
+const targetEl = document.getElementById('target');
+const movesEl = document.getElementById('moves');
+const bestComboEl = document.getElementById('best-combo');
+const comboEl = document.getElementById('combo');
+const overlayEl = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlay-title');
+const overlayDetail = document.getElementById('overlay-detail');
+const overlayBtn = document.getElementById('overlay-btn');
+
+let CELL = 52, GAP = 5;
+let grid = [];
+let stage = 1;
+let stageScore = 0;
+let target = 0;
+let movesLimit = 0;
+let movesUsed = 0;
+let bestCombo = 0;
+let selected = null;
+let busy = false;
+
+function readMetrics() {
+  const cs = getComputedStyle(document.documentElement);
+  CELL = parseFloat(cs.getPropertyValue('--cell'));
+  GAP = parseFloat(cs.getPropertyValue('--gap'));
+}
+
+function posX(c) { return GAP + c * (CELL + GAP); }
+function posY(r) { return GAP + r * (CELL + GAP); }
+
+function setPos(el, r, c) {
+  el.style.left = posX(c) + 'px';
+  el.style.top = posY(r) + 'px';
+}
+
+function classNamesFor(type, special) {
+  let cls = type >= 0 ? `c${type}` : 'c-bomb';
+  if (special === 'stripeRow') cls += ' s-stripeRow';
+  else if (special === 'stripeCol') cls += ' s-stripeCol';
+  else if (special === 'wrapped') cls += ' s-wrapped';
+  else if (special === 'colorbomb') cls += ' s-colorbomb';
+  else if (special === 'fish') cls += ' s-fish';
+  return cls;
+}
+
+function textFor(type, special) {
+  if (special === 'colorbomb') return '★';   // 小さな星マーク（黒球の中心）
+  if (special === 'fish')      return '🐟';
+  // ストライプ・ラッピングはキャンディ本来のシンボルを維持（本家準拠）
+  return SYMBOLS[type] || '';
+}
+
+function makeCandyEl(type, special) {
+  const el = document.createElement('div');
+  el.className = 'candy ' + classNamesFor(type, special);
+  el.textContent = textFor(type, special);
+  boardEl.appendChild(el);
+  return el;
+}
+
+function updateCandyVisual(cell) {
+  cell.el.className = 'candy ' + classNamesFor(cell.type, cell.special);
+  cell.el.textContent = textFor(cell.type, cell.special);
+}
+
+function findPos(el) {
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (grid[r] && grid[r][c] && grid[r][c].el === el) return { r, c };
+    }
+  }
+  return null;
+}
+
+function isAdjacent(a, b) {
+  return (a.r === b.r && Math.abs(a.c - b.c) === 1) ||
+         (a.c === b.c && Math.abs(a.r - b.r) === 1);
+}
+
+function onCandyClick(el) {
+  if (busy) return;
+  const pos = findPos(el);
+  if (!pos) return;
+
+  if (!selected) {
+    selected = pos;
+    el.classList.add('selected');
+    return;
+  }
+
+  const prevEl = grid[selected.r][selected.c].el;
+  prevEl.classList.remove('selected');
+
+  if (selected.r === pos.r && selected.c === pos.c) {
+    selected = null;
+    return;
+  }
+
+  if (isAdjacent(selected, pos)) {
+    const a = selected;
+    selected = null;
+    trySwap(a, pos);
+  } else {
+    selected = pos;
+    el.classList.add('selected');
+  }
+}
+
+function swapCells(a, b) {
+  const ca = grid[a.r][a.c];
+  const cb = grid[b.r][b.c];
+  grid[a.r][a.c] = cb;
+  grid[b.r][b.c] = ca;
+  setPos(ca.el, b.r, b.c);
+  setPos(cb.el, a.r, a.c);
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function canMatch(cell) {
+  return cell && cell.type >= 0 && !cell.marmalade;
+}
+
+function findMatchedCells() {
+  const matched = new Set();
+  for (let r = 0; r < ROWS; r++) {
+    let runStart = 0;
+    for (let c = 1; c <= COLS; c++) {
+      const sameAsPrev = c < COLS && canMatch(grid[r][c]) && canMatch(grid[r][c-1]) &&
+        grid[r][c].type === grid[r][c-1].type;
+      if (!sameAsPrev) {
+        if (c - runStart >= 3) {
+          for (let k = runStart; k < c; k++) matched.add(`${r},${k}`);
+        }
+        runStart = c;
+      }
+    }
+  }
+  for (let c = 0; c < COLS; c++) {
+    let runStart = 0;
+    for (let r = 1; r <= ROWS; r++) {
+      const sameAsPrev = r < ROWS && canMatch(grid[r][c]) && canMatch(grid[r-1][c]) &&
+        grid[r][c].type === grid[r-1][c].type;
+      if (!sameAsPrev) {
+        if (r - runStart >= 3) {
+          for (let k = runStart; k < r; k++) matched.add(`${k},${c}`);
+        }
+        runStart = r;
+      }
+    }
+  }
+  // 2x2正方形マッチ
+  for (let r = 0; r < ROWS - 1; r++) {
+    for (let c = 0; c < COLS - 1; c++) {
+      const a = grid[r][c], b = grid[r][c+1], d = grid[r+1][c], e = grid[r+1][c+1];
+      if (canMatch(a) && canMatch(b) && canMatch(d) && canMatch(e) &&
+          a.type === b.type && a.type === d.type && a.type === e.type) {
+        matched.add(`${r},${c}`);
+        matched.add(`${r},${c+1}`);
+        matched.add(`${r+1},${c}`);
+        matched.add(`${r+1},${c+1}`);
+      }
+    }
+  }
+  return matched;
+}
+
+function groupMatches(matched) {
+  const groups = [];
+  const visited = new Set();
+  for (const key of matched) {
+    if (visited.has(key)) continue;
+    const [sr, sc] = key.split(',').map(Number);
+    const type = grid[sr][sc].type;
+    const cells = new Set();
+    const stack = [key];
+    while (stack.length) {
+      const k = stack.pop();
+      if (visited.has(k)) continue;
+      visited.add(k);
+      cells.add(k);
+      const [r, c] = k.split(',').map(Number);
+      for (const [dr, dc] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+        const nr = r + dr, nc = c + dc;
+        const nk = `${nr},${nc}`;
+        if (matched.has(nk) && !visited.has(nk) && grid[nr][nc] && grid[nr][nc].type === type) {
+          stack.push(nk);
+        }
+      }
+    }
+    groups.push({ type, cells });
+  }
+  return groups;
+}
+
+function analyzeGroup(group) {
+  const byRow = new Map();
+  const byCol = new Map();
+  for (const k of group.cells) {
+    const [r, c] = k.split(',').map(Number);
+    if (!byRow.has(r)) byRow.set(r, []);
+    if (!byCol.has(c)) byCol.set(c, []);
+    byRow.get(r).push(c);
+    byCol.get(c).push(r);
+  }
+  let maxH = 0, maxV = 0;
+  for (const cs of byRow.values()) {
+    cs.sort((a,b) => a-b);
+    let run = 1;
+    for (let i = 1; i < cs.length; i++) {
+      if (cs[i] === cs[i-1] + 1) run++;
+      else { if (run > maxH) maxH = run; run = 1; }
+    }
+    if (run > maxH) maxH = run;
+  }
+  for (const rs of byCol.values()) {
+    rs.sort((a,b) => a-b);
+    let run = 1;
+    for (let i = 1; i < rs.length; i++) {
+      if (rs[i] === rs[i-1] + 1) run++;
+      else { if (run > maxV) maxV = run; run = 1; }
+    }
+    if (run > maxV) maxV = run;
+  }
+  // 2x2正方形を含むかチェック
+  let has2x2 = false;
+  for (const k of group.cells) {
+    const [r, c] = k.split(',').map(Number);
+    if (group.cells.has(`${r},${c+1}`) &&
+        group.cells.has(`${r+1},${c}`) &&
+        group.cells.has(`${r+1},${c+1}`)) {
+      has2x2 = true;
+      break;
+    }
+  }
+  if (maxH >= 5 || maxV >= 5) return 'colorbomb';
+  if (maxH >= 3 && maxV >= 3) return 'wrapped';     // L/T字（3+3）
+  if (maxH >= 4) return 'stripeRow';                // 4横直線
+  if (maxV >= 4) return 'stripeCol';                // 4縦直線
+  if (has2x2) return 'fish';                        // 2x2を含む形（緩和: 純粋でなくてもOK）
+  return 'none';
+}
+
+function pickAnchor(group, swapOrigins) {
+  for (const sp of swapOrigins || []) {
+    if (group.cells.has(`${sp.r},${sp.c}`)) return { r: sp.r, c: sp.c };
+  }
+  let bestKey = null, bestScore = -1;
+  for (const k of group.cells) {
+    const [r, c] = k.split(',').map(Number);
+    let s = 0;
+    for (const [dr, dc] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+      if (group.cells.has(`${r+dr},${c+dc}`)) s++;
+    }
+    if (s > bestScore) { bestScore = s; bestKey = k; }
+  }
+  const [r, c] = bestKey.split(',').map(Number);
+  return { r, c };
+}
+
+function expandWithSpecials(initialSet, protectedSet) {
+  const toRemove = new Set();
+  for (const k of initialSet) if (!protectedSet.has(k)) toRemove.add(k);
+
+  const triggered = new Set();
+  const fishPicked = new Set();
+  let frontier = new Set(toRemove);
+  while (frontier.size > 0) {
+    const next = new Set();
+    for (const k of frontier) {
+      if (triggered.has(k)) continue;
+      triggered.add(k);
+      const [r, c] = k.split(',').map(Number);
+      const cell = grid[r][c];
+      if (!cell || !cell.special || cell.special === 'none') continue;
+      const newKeys = [];
+      if (cell.special === 'stripeRow') {
+        spawnStripeSweep(r, c, 'row');
+        for (let cc = 0; cc < COLS; cc++) newKeys.push(`${r},${cc}`);
+      } else if (cell.special === 'stripeCol') {
+        spawnStripeSweep(r, c, 'col');
+        for (let rr = 0; rr < ROWS; rr++) newKeys.push(`${rr},${c}`);
+      } else if (cell.special === 'wrapped') {
+        // 本家ルール: ラップド爆弾は2回爆発する（2回目は落下後）
+        pendingWrappedDetonations.push({ r, c });
+        for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+          const nr = r + dr, nc = c + dc;
+          if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) newKeys.push(`${nr},${nc}`);
+        }
+      } else if (cell.special === 'fish') {
+        const target = pickFishTarget(fishPicked);
+        if (target) {
+          fishPicked.add(target);
+          newKeys.push(target);
+          const [tr, tc] = target.split(',').map(Number);
+          spawnFishFlight(r, c, tr, tc);
+          playFishSound();
+        }
+      } else if (cell.special === 'colorbomb') {
+        const counts = {};
+        for (let rr = 0; rr < ROWS; rr++) for (let cc = 0; cc < COLS; cc++) {
+          const x = grid[rr][cc];
+          if (x && x.type >= 0) counts[x.type] = (counts[x.type] || 0) + 1;
+        }
+        let pickType = -1, pickCount = -1;
+        for (const t in counts) {
+          if (counts[t] > pickCount) { pickCount = counts[t]; pickType = +t; }
+        }
+        if (pickType >= 0) {
+          for (let rr = 0; rr < ROWS; rr++) for (let cc = 0; cc < COLS; cc++) {
+            const x = grid[rr][cc];
+            if (x && x.type === pickType) newKeys.push(`${rr},${cc}`);
+          }
+        }
+      }
+      for (const nk of newKeys) {
+        if (toRemove.has(nk) || protectedSet.has(nk)) continue;
+        const [nr, nc] = nk.split(',').map(Number);
+        const x = grid[nr] && grid[nr][nc];
+        if (x && x.ingredient) continue; // 材料は爆発で消えない
+        toRemove.add(nk);
+        next.add(nk);
+      }
+    }
+    frontier = next;
+  }
+  return toRemove;
+}
+
+async function processRemoval(toRemove, comboLevel, newSpecials) {
+  newSpecials = newSpecials || [];
+  if (comboLevel > bestCombo) { bestCombo = comboLevel; bestComboEl.textContent = bestCombo; }
+  if (comboLevel >= 2) showCombo(comboLevel);
+
+  // 隣接するチョコレートを巻き込む
+  if (chocolateActive) {
+    const chocs = findAdjacentChocolates(toRemove);
+    for (const k of chocs) toRemove.add(k);
+  }
+  // 隣接するマーマレードを溶かす（殻だけ取れる、キャンディは残る）
+  if (marmaladeActive) {
+    breakAdjacentMarmalade(toRemove);
+  }
+
+  let hasStripe = false, hasWrapped = false, hasBomb = false;
+  for (const k of toRemove) {
+    const [r, c] = k.split(',').map(Number);
+    const cell = grid[r][c];
+    if (cell && cell.special) {
+      if (cell.special === 'stripeRow' || cell.special === 'stripeCol') hasStripe = true;
+      if (cell.special === 'wrapped') hasWrapped = true;
+      if (cell.special === 'colorbomb') hasBomb = true;
+      // fish音はexpandWithSpecialsで発火時に既に再生済みのため除外
+    }
+  }
+  if (hasBomb) playColorBombSound();
+  else if (hasWrapped) playExplosion();
+  else if (hasStripe) playStripeSound();
+  else playMatchSounds(toRemove.size);
+
+  const gained = toRemove.size * 30 * comboLevel + newSpecials.length * 60;
+  stageScore += gained;
+  scoreEl.textContent = stageScore;
+
+  let cx = 0, cy = 0, cn = 0;
+  for (const k of toRemove) {
+    const [r, c] = k.split(',').map(Number);
+    const cell = grid[r][c];
+    if (cell) {
+      cell.el.classList.add('popping');
+      const colorIdx = cell.type >= 0 ? cell.type : Math.floor(Math.random() * 6);
+      spawnParticles(posX(c) + CELL/2, posY(r) + CELL/2, colorIdx, cell.special !== 'none' ? 2 : 1);
+      cx += posX(c) + CELL/2;
+      cy += posY(r) + CELL/2;
+      cn++;
+    }
+  }
+  if (cn) spawnScorePopup(cx/cn, cy/cn, '+' + gained);
+
+  await sleep(660);   // pop アニメ(0.60s)完了を待つ
+
+  for (const k of toRemove) {
+    const [r, c] = k.split(',').map(Number);
+    if (grid[r][c]) {
+      trackOrders(grid[r][c]);
+      hitJelly(r, c);
+      grid[r][c].el.remove();
+      grid[r][c] = null;
+    }
+  }
+  updateHUD();
+
+  for (const s of newSpecials) {
+    if (grid[s.r][s.c]) {
+      const cell = grid[s.r][s.c];
+      cell.special = s.special;
+      if (s.special === 'colorbomb') cell.type = -1;
+      updateCandyVisual(cell);
+    }
+  }
+
+  applyGravity();
+  await sleep(700);   // 落下トランジション(0.62s)完了を待つ
+
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    if (grid[r][c]) grid[r][c].el.classList.remove('falling');
+  }
+}
+
+async function cascade(swapOrigins) {
+  let combo = 0;
+  let originsForThisStep = swapOrigins || [];
+  pendingWrappedDetonations.length = 0;
+  while (true) {
+    // ラップド爆弾の二重爆発（本家ルール: 爆発→落下→もう一度爆発）
+    if (pendingWrappedDetonations.length > 0) {
+      const det = pendingWrappedDetonations.slice();
+      pendingWrappedDetonations.length = 0;
+      const toRemove2 = new Set();
+      for (const { r, c, size } of det) {
+        const range = size || 1; // size:1 → 3×3(通常ラッピング)、size:2 → 5×5(wrap-wrap)
+        for (let dr = -range; dr <= range; dr++) for (let dc = -range; dc <= range; dc++) {
+          const rr = r + dr, cc = c + dc;
+          if (rr < 0 || rr >= ROWS || cc < 0 || cc >= COLS) continue;
+          const x = grid[rr][cc];
+          if (x && !x.ingredient) toRemove2.add(`${rr},${cc}`);
+        }
+      }
+      if (toRemove2.size > 0) {
+        combo++;
+        const expanded = expandWithSpecials(toRemove2, new Set());
+        await processRemoval(expanded, combo, []);
+        continue;
+      }
+    }
+
+    // 材料が最下段に到達していれば回収（マッチより先にチェック）
+    if (mission && mission.type === 'ingredient') {
+      const got = await collectBottomIngredients();
+      if (got > 0) {
+        applyGravity();
+        await sleep(700);
+        for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+          if (grid[r][c]) grid[r][c].el.classList.remove('falling');
+        }
+        continue;
+      }
+    }
+
+    const matched = findMatchedCells();
+    if (matched.size === 0) break;
+    combo++;
+
+    const groups = groupMatches(matched);
+    const newSpecials = [];
+    const protectedSet = new Set();
+
+    for (const g of groups) {
+      const specialType = analyzeGroup(g);
+      if (specialType !== 'none') {
+        const anchor = pickAnchor(g, originsForThisStep);
+        newSpecials.push({ r: anchor.r, c: anchor.c, type: g.type, special: specialType });
+        protectedSet.add(`${anchor.r},${anchor.c}`);
+      }
+    }
+
+    const toRemove = expandWithSpecials(matched, protectedSet);
+    await processRemoval(toRemove, combo, newSpecials);
+
+    originsForThisStep = [];
+  }
+}
+
+function applyGravity() {
+  for (let c = 0; c < COLS; c++) {
+    const survivors = [];
+    for (let r = 0; r < ROWS; r++) {
+      if (grid[r][c]) survivors.push(grid[r][c]);
+      grid[r][c] = null;
+    }
+    const gaps = ROWS - survivors.length;
+    for (let i = 0; i < gaps; i++) {
+      const type = Math.floor(Math.random() * TYPES);
+      const el = makeCandyEl(type, 'none');
+      setPos(el, i - gaps, c);
+      el.classList.add('falling');
+      grid[i][c] = { type, special: 'none', el };
+    }
+    for (let i = 0; i < survivors.length; i++) {
+      grid[gaps + i][c] = survivors[i];
+      survivors[i].el.classList.add('falling');
+    }
+  }
+  void boardEl.offsetHeight;
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (grid[r][c]) setPos(grid[r][c].el, r, c);
+    }
+  }
+}
+
+function spawnParticles(x, y, type, intensity) {
+  const color = COLORS[type] || '#fff';
+  const count = 10 * (intensity || 1);
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = (x - 5) + 'px';
+    p.style.top = (y - 5) + 'px';
+    p.style.background = color;
+    p.style.color = color;
+    const angle = (Math.PI * 2 * i) / count + Math.random() * 0.4;
+    const dist = 30 + Math.random() * 40 * (intensity || 1);
+    p.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+    p.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
+    boardEl.appendChild(p);
+    setTimeout(() => p.remove(), 850);
+  }
+}
+
+function spawnScorePopup(x, y, text) {
+  const el = document.createElement('div');
+  el.className = 'score-popup';
+  el.textContent = text;
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+  boardEl.appendChild(el);
+  setTimeout(() => el.remove(), 1050);
+}
+
+function showCombo(combo) {
+  let text;
+  if (typeof combo === 'string') {
+    text = combo;
+  } else {
+    const cap = Math.min(combo, 7);
+    text = COMBO_NAMES[cap] || COMBO_NAMES[7];
+    if (!text) return;
+  }
+  comboEl.textContent = text;
+  comboEl.classList.remove('show');
+  void comboEl.offsetWidth;
+  comboEl.classList.add('show');
+  if (typeof combo === 'number') playComboSound(combo);
+}
+
+// ===== ラップド爆弾の二重爆発（本家ルール） =====
+let pendingWrappedDetonations = [];
+
+// ===== フィッシュのターゲット選択 =====
+function pickFishTarget(picked) {
+  const candidates = []; // {priority, key}
+  // 優先度4: 2層ゼリー
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    if (jellyGrid[r] && jellyGrid[r][c] === 2 && !picked.has(`${r},${c}`)) {
+      candidates.push({ p: 4, key: `${r},${c}` });
+    }
+  }
+  // 優先度3: 1層ゼリー
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    if (jellyGrid[r] && jellyGrid[r][c] === 1 && !picked.has(`${r},${c}`)) {
+      candidates.push({ p: 3, key: `${r},${c}` });
+    }
+  }
+  // 優先度2: チョコレート
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    const x = grid[r][c];
+    if (x && x.obstacle === 'chocolate' && !picked.has(`${r},${c}`)) {
+      candidates.push({ p: 2, key: `${r},${c}` });
+    }
+  }
+  // 優先度1: マーマレード
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    const x = grid[r][c];
+    if (x && x.marmalade && !picked.has(`${r},${c}`)) {
+      candidates.push({ p: 1, key: `${r},${c}` });
+    }
+  }
+  if (candidates.length > 0) {
+    candidates.sort((a, b) => b.p - a.p);
+    const topP = candidates[0].p;
+    const tops = candidates.filter(c => c.p === topP);
+    return tops[Math.floor(Math.random() * tops.length)].key;
+  }
+  // フォールバック: ランダムな通常キャンディ
+  const candies = [];
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    const x = grid[r][c];
+    if (x && x.type >= 0 && x.special === 'none' && !x.ingredient && !x.obstacle && !x.marmalade && !picked.has(`${r},${c}`)) {
+      candies.push(`${r},${c}`);
+    }
+  }
+  if (candies.length === 0) return null;
+  return candies[Math.floor(Math.random() * candies.length)];
+}
+
+function spawnStripeSweep(r, c, direction) {
+  const el = document.createElement('div');
+  if (direction === 'row') {
+    el.className = 'stripe-sweep-h';
+    // 行の中央に配置（セル中心を揃える）
+    el.style.top = posY(r) + 'px';
+  } else {
+    el.className = 'stripe-sweep-v';
+    el.style.left = posX(c) + 'px';
+  }
+  boardEl.appendChild(el);
+  setTimeout(() => el.remove(), 450);
+}
+
+function spawnFishFlight(fromR, fromC, toR, toC) {
+  const fishEl = document.createElement('div');
+  fishEl.className = 'fish-flight';
+  fishEl.textContent = '🐟';
+
+  const sx = posX(fromC);
+  const sy = posY(fromR);
+  fishEl.style.left = sx + 'px';
+  fishEl.style.top  = sy + 'px';
+  boardEl.appendChild(fishEl);
+
+  // 目標位置（始点からの相対）
+  const ex = posX(toC) - sx;
+  const ey = posY(toR) - sy;
+
+  // 盤面内でランダムな中継地点を2つ生成（始点からの相対座標）
+  const bw = COLS * (CELL + GAP);
+  const bh = ROWS * (CELL + GAP);
+  const pad = CELL * 0.8;
+  function randPt() {
+    return {
+      x: (pad + Math.random() * (bw - pad * 2)) - sx,
+      y: (pad + Math.random() * (bh - pad * 2)) - sy,
+    };
+  }
+  const w1 = randPt();
+  const w2 = randPt();
+
+  // 進行方向に合わせて左右反転させるヘルパー
+  function scaleX(nextX, curX) {
+    return nextX < curX ? 'scaleX(-1)' : 'scaleX(1)';
+  }
+
+  // Web Animations API でランダム経路を定義
+  // 0→w1: ふらふら泳ぎ出し  w1→w2: 盤面を泳ぎ回る  w2→target: 一気に突進
+  const keyframes = [
+    {
+      transform: `translate(0px, 0px) scale(0.7) ${scaleX(w1.x, 0)}`,
+      opacity: 0, offset: 0
+    },
+    {
+      transform: `translate(${w1.x}px, ${w1.y}px) scale(1.15) rotate(-22deg) ${scaleX(w1.x, 0)}`,
+      opacity: 1, offset: 0.25
+    },
+    {
+      transform: `translate(${w2.x}px, ${w2.y}px) scale(1.05) rotate(18deg) ${scaleX(w2.x, w1.x)}`,
+      opacity: 1, offset: 0.55
+    },
+    {
+      // ターゲット手前で一瞬溜め
+      transform: `translate(${ex * 0.75}px, ${ey * 0.75}px) scale(1.25) rotate(-8deg) ${scaleX(ex, w2.x)}`,
+      opacity: 1, offset: 0.80
+    },
+    {
+      // ターゲットに突進して消える
+      transform: `translate(${ex}px, ${ey}px) scale(0.25) rotate(0deg)`,
+      opacity: 0, offset: 1
+    },
+  ];
+
+  fishEl.animate(keyframes, {
+    duration: 1350,
+    easing: 'ease-in-out',
+    fill: 'forwards',
+  }).onfinish = () => fishEl.remove();
+}
+
+// ===== 特殊キャンディ同士の組み合わせ判定 =====
+function detectSpecialCombo(ca, cb) {
+  if (!ca || !cb) return null;
+  if (ca.ingredient || cb.ingredient) return null;
+  const sA = ca.special, sB = cb.special;
+  const stripes = ['stripeRow', 'stripeCol'];
+  const aStripe = stripes.includes(sA);
+  const bStripe = stripes.includes(sB);
+  const aWrap = sA === 'wrapped';
+  const bWrap = sB === 'wrapped';
+  const aBomb = sA === 'colorbomb';
+  const bBomb = sB === 'colorbomb';
+
+  if (aBomb && bBomb) return { type: 'bomb-bomb' };
+  if (aBomb && bStripe) return { type: 'bomb-stripe', targetType: cb.type };
+  if (bBomb && aStripe) return { type: 'bomb-stripe', targetType: ca.type };
+  if (aBomb && bWrap)   return { type: 'bomb-wrapped', targetType: cb.type };
+  if (bBomb && aWrap)   return { type: 'bomb-wrapped', targetType: ca.type };
+  if (aBomb && !bBomb && sB === 'none') return { type: 'bomb-normal', targetType: cb.type };
+  if (bBomb && !aBomb && sA === 'none') return { type: 'bomb-normal', targetType: ca.type };
+  if (aStripe && bStripe)               return { type: 'stripe-stripe' };
+  if ((aStripe && bWrap) || (aWrap && bStripe)) return { type: 'stripe-wrapped' };
+  if (aWrap && bWrap)                   return { type: 'wrap-wrap' };
+  return null;
+}
+
+function comboName(type) {
+  return ({
+    'bomb-bomb':       '🐱 ぜんぶにゃー！！',
+    'bomb-stripe':     '😹 にゃストライプ！',
+    'bomb-wrapped':    '🙀 にゃラッピング！',
+    'bomb-normal':     '😻 にゃカラー！',
+    'stripe-stripe':   '😸 十字にゃー！',
+    'stripe-wrapped':  '✦ ROW & COL!',
+    'wrap-wrap':       '🙀 メガにゃーん！！',
+  })[type] || '💥 COMBO!';
+}
+
+async function applySpecialCombo(combo, ca, cb, a, b) {
+  // After swapCells: ca is at b, cb is at a
+  const toRemove = new Set();
+  const tr = b.r, tc = b.c;
+
+  switch (combo.type) {
+    case 'bomb-bomb': {
+      ca.special = 'none'; cb.special = 'none';
+      for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+        const x = grid[r][c];
+        if (x && !x.ingredient) toRemove.add(`${r},${c}`);
+      }
+      break;
+    }
+    case 'bomb-normal': {
+      const bomb = ca.special === 'colorbomb' ? ca : cb;
+      bomb.special = 'none';
+      toRemove.add(`${a.r},${a.c}`);
+      toRemove.add(`${b.r},${b.c}`);
+      for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+        const x = grid[r][c];
+        if (x && !x.ingredient && x.type === combo.targetType) {
+          toRemove.add(`${r},${c}`);
+        }
+      }
+      break;
+    }
+    case 'bomb-stripe':
+    case 'bomb-wrapped': {
+      const bomb = ca.special === 'colorbomb' ? ca : cb;
+      bomb.special = 'none';
+      // 同色のキャンディをすべて特殊化
+      for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+        const x = grid[r][c];
+        if (!x || x.ingredient) continue;
+        if (x.type === combo.targetType && x.special === 'none') {
+          x.special = (combo.type === 'bomb-stripe'
+            ? (Math.random() < 0.5 ? 'stripeRow' : 'stripeCol')
+            : 'wrapped');
+          updateCandyVisual(x);
+        }
+      }
+      await sleep(500);
+      // 全部の同色特殊と元の2セルを除去対象に
+      toRemove.add(`${a.r},${a.c}`);
+      toRemove.add(`${b.r},${b.c}`);
+      for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+        const x = grid[r][c];
+        if (!x || x.ingredient) continue;
+        if (x.type === combo.targetType && x.special !== 'none') {
+          toRemove.add(`${r},${c}`);
+        }
+      }
+      break;
+    }
+    case 'stripe-stripe': {
+      ca.special = 'none'; cb.special = 'none';
+      // 行 + 列を消去（十字スイープ）
+      spawnStripeSweep(tr, tc, 'row');
+      spawnStripeSweep(tr, tc, 'col');
+      for (let cc = 0; cc < COLS; cc++) {
+        if (grid[tr][cc] && !grid[tr][cc].ingredient) toRemove.add(`${tr},${cc}`);
+      }
+      for (let rr = 0; rr < ROWS; rr++) {
+        if (grid[rr][tc] && !grid[rr][tc].ingredient) toRemove.add(`${rr},${tc}`);
+      }
+      toRemove.add(`${a.r},${a.c}`);
+      break;
+    }
+    case 'stripe-wrapped': {
+      ca.special = 'none'; cb.special = 'none';
+      // 縦3行 + 横3列（3本ずつスイープ）
+      for (let dr = -1; dr <= 1; dr++) {
+        const rr = tr + dr;
+        if (rr < 0 || rr >= ROWS) continue;
+        spawnStripeSweep(rr, tc, 'row');
+        for (let cc = 0; cc < COLS; cc++) {
+          if (grid[rr][cc] && !grid[rr][cc].ingredient) toRemove.add(`${rr},${cc}`);
+        }
+      }
+      for (let dc = -1; dc <= 1; dc++) {
+        const cc = tc + dc;
+        if (cc < 0 || cc >= COLS) continue;
+        spawnStripeSweep(tr, cc, 'col');
+        for (let rr = 0; rr < ROWS; rr++) {
+          if (grid[rr][cc] && !grid[rr][cc].ingredient) toRemove.add(`${rr},${cc}`);
+        }
+      }
+      toRemove.add(`${a.r},${a.c}`);
+      break;
+    }
+    case 'wrap-wrap': {
+      ca.special = 'none'; cb.special = 'none';
+      // 1回目：5×5爆発
+      for (let dr = -2; dr <= 2; dr++) for (let dc = -2; dc <= 2; dc++) {
+        const rr = tr + dr, cc = tc + dc;
+        if (rr < 0 || rr >= ROWS || cc < 0 || cc >= COLS) continue;
+        if (grid[rr][cc] && !grid[rr][cc].ingredient) toRemove.add(`${rr},${cc}`);
+      }
+      // 2回目：落下後に同じ中心で再爆発（本家ルール）
+      pendingWrappedDetonations.push({ r: tr, c: tc, size: 2 }); // size:2 → 5×5
+      pendingWrappedDetonations.push({ r: tr, c: tc, size: 2 });
+      break;
+    }
+  }
+
+  return toRemove;
+}
+
+async function trySwap(a, b) {
+  busy = true;
+  playSwap();
+  const ca = grid[a.r][a.c];
+  const cb = grid[b.r][b.c];
+  const ingredientSwap = ca.ingredient || cb.ingredient;
+  const combo = !ingredientSwap ? detectSpecialCombo(ca, cb) : null;
+
+  if (combo) {
+    swapCells(a, b);
+    await sleep(280);
+    movesUsed++;
+    updateHUD();
+    showCombo(comboName(combo.type));
+    playExplosion();
+    let toRemove = await applySpecialCombo(combo, ca, cb, a, b);
+    toRemove = expandWithSpecials(toRemove, new Set());
+    await processRemoval(toRemove, 1, []);
+    await cascade();
+    await spreadChocolate();
+    if (!isMissionCleared() && movesUsed < movesLimit) {
+      await shuffleBoardIfStuck();
+    }
+    checkStageEnd();
+    busy = false;
+    startIdleTimer();
+    return;
+  }
+
+  swapCells(a, b);
+  await sleep(280);
+
+  // 材料スワップは無条件成立、通常スワップはマッチが必要
+  if (!ingredientSwap && findMatchedCells().size === 0) {
+    swapCells(a, b);
+    await sleep(280);
+    busy = false;
+    startIdleTimer();
+    return;
+  }
+
+  movesUsed++;
+  updateHUD();
+  // 本家ルール: 移動先のキャンディが特殊化されるので b を先に渡す
+  await cascade([b, a]);
+  await spreadChocolate();
+  if (!isMissionCleared() && movesUsed < movesLimit) {
+    await shuffleBoardIfStuck();
+  }
+  checkStageEnd();
+  busy = false;
+  startIdleTimer();
+}
+
+function buildInitialGrid() {
+  grid = [];
+  for (let r = 0; r < ROWS; r++) {
+    const row = [];
+    for (let c = 0; c < COLS; c++) {
+      let type;
+      let guard = 0;
+      do {
+        type = Math.floor(Math.random() * TYPES);
+        guard++;
+      } while (
+        guard < 40 && (
+          (c >= 2 && row[c-1].type === type && row[c-2].type === type) ||
+          (r >= 2 && grid[r-1][c].type === type && grid[r-2][c].type === type) ||
+          (c >= 1 && r >= 1 && row[c-1].type === type &&
+            grid[r-1][c].type === type && grid[r-1][c-1].type === type)
+        )
+      );
+      row.push({ type, special: 'none', el: null });
+    }
+    grid.push(row);
+  }
+}
+
+function stageData(n) {
+  const type = MISSION_CYCLE[(n - 1) % MISSION_CYCLE.length];
+  const tier = Math.floor((n - 1) / MISSION_CYCLE.length) + 1;
+  let d;
+  if (type === 'score') {
+    d = { type, target: 1500 + (tier - 1) * 1500, moves: Math.max(20, 30 - tier) };
+  } else if (type === 'jelly') {
+    d = {
+      type,
+      jellyCount: Math.min(6 + tier * 3, 30),
+      jellyDouble: tier >= 2 ? Math.min(tier * 2, 8) : 0,
+      moves: 24 + tier * 2,
+    };
+  } else if (type === 'ingredient') {
+    d = { type, ingredientTarget: Math.min(2 + tier, 6), moves: 26 + tier * 2 };
+  } else if (type === 'order') {
+    d = { type, orders: generateOrders(tier), moves: 25 + tier };
+  } else {
+    d = { type: 'score', target: 1500, moves: 25 };
+  }
+  // 障害物（tier 2以降に出現、本家準拠）
+  if (tier >= 2) d.chocolates = Math.min(1 + Math.floor((tier - 1) / 2), 4);
+  if (tier >= 3) d.marmalades = Math.min(2 + Math.floor((tier - 2) / 2), 6);
+  return d;
+}
+
+function updateHUD() {
+  stageEl.textContent = stage;
+  scoreEl.textContent = stageScore;
+  movesEl.textContent = Math.max(0, movesLimit - movesUsed);
+  bestComboEl.textContent = bestCombo;
+  const missionEl = document.getElementById('mission');
+  if (missionEl) missionEl.innerHTML = missionLabel();
+}
+
+function checkStageEnd() {
+  if (isMissionCleared()) {
+    setTimeout(() => stageClear(), 500);
+  } else if (movesUsed >= movesLimit) {
+    setTimeout(() => gameOver(), 500);
+  }
+}
+
+function computeStars() {
+  if (!mission) return 1;
+  if (mission.type === 'score') {
+    if (stageScore >= target * 2.5) return 3;
+    if (stageScore >= target * 1.5) return 2;
+    return 1;
+  }
+  const ratio = (movesLimit - movesUsed) / movesLimit;
+  if (ratio >= 0.4) return 3;
+  if (ratio >= 0.15) return 2;
+  return 1;
+}
+
+function starsHTML(n) {
+  let html = '<div class="stage-stars">';
+  for (let i = 1; i <= 3; i++) {
+    if (i <= n) html += `<span class="star s${i}">⭐</span>`;
+    else html += `<span class="star empty s${i}">☆</span>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+async function stageClear() {
+  busy = true;
+  cancelIdleAndHint();
+  await sugarCrushBonus();
+  playClear();
+  const comboText = bestCombo >= 2 ? (COMBO_NAMES[Math.min(bestCombo,7)] || ('x' + bestCombo)) : 'x' + bestCombo;
+  const stars = computeStars();
+  showOverlay(
+    `🎉 ステージ ${stage} クリア！`,
+    `${starsHTML(stars)}${missionDetailText()}<br>最終スコア: ${stageScore}<br>最高連鎖: ${comboText}`,
+    '次のステージへ',
+    () => { stage++; startStage(); }
+  );
+}
+
+function gameOver() {
+  busy = true;
+  cancelIdleAndHint();
+  playGameOverSound();
+  showOverlay(
+    `💔 ゲームオーバー`,
+    `ステージ ${stage} 失敗<br>${missionDetailText()}`,
+    'もう一度',
+    () => { stage = 1; startStage(); }
+  );
+}
+
+function showOverlay(title, detailHTML, btnText, onBtn) {
+  cancelIdleAndHint();
+  overlayTitle.textContent = title;
+  overlayDetail.innerHTML = detailHTML;
+  overlayBtn.textContent = btnText;
+  overlayBtn.onclick = () => {
+    overlayEl.classList.remove('show');
+    onBtn();
+  };
+  overlayEl.classList.add('show');
+}
+
+function showHelp(isFirstTime) {
+  cancelIdleAndHint();
+  overlayTitle.textContent = '🍭 遊び方';
+  overlayDetail.innerHTML = `
+    <div class="help-content">
+      <div class="section-title">🎮 基本操作（2通り）</div>
+      <div class="step"><div class="step-num">A</div><div><b>ドラッグ/スワイプ</b>：キャンディを動かしたい方向（上下左右）に少しドラッグすると、隣のキャンディと入れ替わります</div></div>
+      <div class="step"><div class="step-num">B</div><div><b>クリックでも可</b>：1つ目をクリック→隣をクリックで入れ替え</div></div>
+      <div class="step"><div class="step-num">★</div><div>同じ色が<b>縦か横に3個以上</b>並ぶと消えてスコアGET！</div></div>
+      <div class="step"><div class="step-num">!</div><div>揃わない入れ替えは<b>無効</b>になり元に戻ります（手数も減りません）</div></div>
+
+      <hr>
+      <div class="section-title">💡 ヒント機能</div>
+      <p>5秒くらい操作がないと、<b>消せる場所が黄色く点滅</b>します。困ったら待ってみてください。</p>
+
+      <hr>
+      <div class="section-title">🎯 ミッション（ステージごとに変化）</div>
+      <p>4種類のクリア条件が <b>ステージごとに循環</b> します:</p>
+      <p>・<b>🎯 スコア</b>: 指定ポイントを稼ぐ</p>
+      <p>・<b>🟦 ゼリー消去</b>: 盤面の青いタイル（ゼリー）の上のキャンディを消して、すべてのゼリーを破壊する。2層は濃い青色</p>
+      <p>・<b>🍒 材料</b>: 🍒🌰を最下段まで落として収集する（特殊キャンディの爆発でも消えない）</p>
+      <p>・<b>🎨 注文</b>: 指定された色のキャンディを指定個数消す</p>
+      <p>どのミッションも <b>残り手数</b> 以内に達成すれば次のステージへ。失敗ならゲームオーバー。</p>
+
+      <hr>
+      <div class="section-title">✨ 特殊キャンディの作り方</div>
+      <p>・<b>4個</b>を直線で消す → <b>ストライプ</b>（行か列を一気に消す）</p>
+      <p>・<b>L字 / T字</b>で消す → <b>ラップド爆弾</b>（3x3を爆発→落下→もう一度3x3爆発の<b>二重爆発</b>）</p>
+      <p>・<b>2x2の正方形</b>を含む形で消す → <b>🐟 フィッシュ</b>（ゼリーや障害物などの「面倒なターゲット」を1つピンポイント破壊。ゆらゆら泳いで標的に飛んでいく）</p>
+      <p>・<b>5個</b>を直線で消す → <b>カラーボム ✺</b>（虹色、同じ色を全部消す）</p>
+
+      <hr>
+      <div class="section-title">🍫 障害物（Tier2以降のステージで登場）</div>
+      <p>・<b>🍫 チョコレート</b>: 動かせない・消せないブロック。<b>毎ターン1個ずつ増殖</b>するので、隣でマッチして消そう</p>
+      <p>・<b>マーマレード（殻入りキャンディ）</b>: 殻に閉じ込められて<b>マッチできない</b>。隣でマッチすると殻が割れて中のキャンディが解放される</p>
+
+      <hr>
+      <div class="section-title">💥 特殊キャンディの組み合わせ（本家ルール）</div>
+      <p>2つの特殊キャンディを <b>隣り合わせてスワップ</b> すると大爆発！</p>
+      <p>・<b>ストライプ × ストライプ</b> → ✚ 十字に行+列消去</p>
+      <p>・<b>ストライプ × ラップド</b> → 縦3行 + 横3列の超広範囲消去</p>
+      <p>・<b>ラップド × ラップド</b> → 🔥 5x5メガ爆発</p>
+      <p>・<b>カラーボム × ストライプ</b> → 同色を全部ストライプに変えて連続発火</p>
+      <p>・<b>カラーボム × ラップド</b> → 同色を全部ラップドに変えて連続爆発</p>
+      <p>・<b>カラーボム × カラーボム</b> → 💥 盤面全消し！</p>
+
+      <hr>
+      <div class="section-title">🔥 連鎖ボイス</div>
+      <p>連鎖するたびに <b>Sweet → Tasty → Delicious → Divine → Mind Blowing → Sugar Crush</b> の称号が出現します</p>
+
+      <hr>
+      <div class="section-title">🎆 Sugar Crush ボーナス</div>
+      <p>ステージクリア時、残った手数が <b>自動で特殊キャンディに変換</b> されて連続爆発、ボーナス加点になります</p>
+
+      <hr>
+      <div class="section-title">🔀 詰み自動シャッフル</div>
+      <p>マッチできる手が無くなったら自動でキャンディを並び替え、出し直されます</p>
+
+      <hr>
+      <div class="section-title">🔊 サウンド</div>
+      <p>右下の<b>🔊ボタン</b>でON/OFF。スワップ・ポップ・爆発音などをWeb Audioで合成しています</p>
+    </div>
+  `;
+  overlayBtn.textContent = isFirstTime ? '🍬 スタート！' : '閉じる';
+  overlayBtn.onclick = () => {
+    overlayEl.classList.remove('show');
+    startIdleTimer();
+  };
+  overlayEl.classList.add('show');
+}
+
+function startStage() {
+  cancelIdleAndHint();
+  const d = stageData(stage);
+  mission = d;
+  target = d.target || 0;
+  movesLimit = d.moves;
+  movesUsed = 0;
+  stageScore = 0;
+  bestCombo = 0;
+  selected = null;
+  busy = true;
+
+  // ミッション状態リセット
+  jellyGrid = [];
+  totalJellyRemaining = 0;
+  ingredientsCollected = 0;
+  ingredientsToCollect = d.ingredientTarget || 0;
+  orders = (d.orders || []).map(o => ({ color: o.color, target: o.count, collected: 0 }));
+  chocolateActive = false;
+  marmaladeActive = false;
+
+  boardEl.querySelectorAll('.candy, .particle, .score-popup, .jelly-cell').forEach(n => n.remove());
+
+  readMetrics();
+  buildInitialGrid();
+
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const cell = grid[r][c];
+      cell.el = makeCandyEl(cell.type, 'none');
+      setPos(cell.el, r, c);
+    }
+  }
+
+  // ミッション固有の盤面セットアップ
+  if (d.type === 'jelly') setupJellyMission(d);
+  else if (d.type === 'ingredient') setupIngredientMission(d);
+
+  // 障害物セットアップ
+  if (d.chocolates) setupChocolates(d.chocolates);
+  if (d.marmalades) setupMarmalade(d.marmalades);
+
+  updateHUD();
+
+  // ミッション開始バナー
+  if (d.type !== 'score' || stage > 1) {
+    showCombo(missionIntroText());
+  }
+
+  busy = false;
+  startIdleTimer();
+}
+
+function restartGame() {
+  if (overlayEl.classList.contains('show')) overlayEl.classList.remove('show');
+  stage = 1;
+  startStage();
+}
+
+// ===== ミッション（クリア条件） =====
+const MISSION_CYCLE = ['score', 'jelly', 'ingredient', 'order'];
+const INGREDIENT_SYMBOLS = ['🐟', '🥛'];
+let mission = null;
+let jellyGrid = [];
+let totalJellyRemaining = 0;
+let ingredientsCollected = 0;
+let ingredientsToCollect = 0;
+let orders = []; // {color, target, collected}
+
+function shuffleArr(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function generateOrders(tier) {
+  const num = Math.min(1 + Math.floor((tier - 1) / 2), 3);
+  const colors = shuffleArr([0,1,2,3,4,5]).slice(0, num);
+  return colors.map(c => ({ color: c, count: 12 + tier * 4 }));
+}
+
+function setupJellyMission(d) {
+  const all = [];
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) all.push({ r, c });
+  shuffleArr(all);
+  jellyGrid = [];
+  for (let r = 0; r < ROWS; r++) jellyGrid.push(new Array(COLS).fill(0));
+  totalJellyRemaining = 0;
+  const dbl = d.jellyDouble || 0;
+  for (let i = 0; i < d.jellyCount; i++) {
+    const p = all[i];
+    const layer = i < dbl ? 2 : 1;
+    jellyGrid[p.r][p.c] = layer;
+    totalJellyRemaining += layer;
+  }
+  renderJelly();
+}
+
+function renderJelly() {
+  boardEl.querySelectorAll('.jelly-cell').forEach(n => n.remove());
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    if (jellyGrid[r] && jellyGrid[r][c] > 0) {
+      const j = document.createElement('div');
+      j.className = 'jelly-cell' + (jellyGrid[r][c] === 2 ? ' l2' : '');
+      j.style.left = posX(c) + 'px';
+      j.style.top = posY(r) + 'px';
+      j.dataset.r = r;
+      j.dataset.c = c;
+      boardEl.appendChild(j);
+    }
+  }
+}
+
+function hitJelly(r, c) {
+  if (!mission || mission.type !== 'jelly') return;
+  if (!jellyGrid[r] || jellyGrid[r][c] <= 0) return;
+  jellyGrid[r][c]--;
+  totalJellyRemaining--;
+  const j = boardEl.querySelector(`.jelly-cell[data-r="${r}"][data-c="${c}"]`);
+  if (j) {
+    if (jellyGrid[r][c] === 0) {
+      j.classList.add('broken');
+      setTimeout(() => j.remove(), 500);
+    } else {
+      j.classList.remove('l2');
+    }
+  }
+}
+
+function setupIngredientMission(d) {
+  const used = new Set();
+  const targets = d.ingredientTarget;
+  let placed = 0;
+  let attempts = 0;
+  while (placed < targets && attempts < 100) {
+    attempts++;
+    const c = Math.floor(Math.random() * COLS);
+    const r = Math.floor(Math.random() * 2);
+    const k = `${r},${c}`;
+    if (used.has(k)) continue;
+    used.add(k);
+    const old = grid[r][c];
+    if (old && old.el) old.el.remove();
+    const ing = { type: -3, special: 'none', ingredient: true };
+    ing.el = makeCandyEl(-3, 'none');
+    ing.el.classList.add('ingredient');
+    ing.el.textContent = INGREDIENT_SYMBOLS[placed % INGREDIENT_SYMBOLS.length];
+    setPos(ing.el, r, c);
+    grid[r][c] = ing;
+    placed++;
+  }
+}
+
+async function collectBottomIngredients() {
+  if (!mission || mission.type !== 'ingredient') return 0;
+  const collected = [];
+  for (let c = 0; c < COLS; c++) {
+    const cell = grid[ROWS - 1][c];
+    if (cell && cell.ingredient) collected.push({ r: ROWS - 1, c, cell });
+  }
+  if (collected.length === 0) return 0;
+  for (const ci of collected) {
+    ci.cell.el.classList.add('ingredient-collected');
+    spawnParticles(posX(ci.c) + CELL/2, posY(ci.r) + CELL/2, 2, 3);
+    spawnScorePopup(posX(ci.c) + CELL/2, posY(ci.r) + CELL/2, '🍒 GET!');
+  }
+  playClear();
+  await sleep(520);
+  for (const ci of collected) {
+    if (grid[ci.r][ci.c] === ci.cell) {
+      ci.cell.el.remove();
+      grid[ci.r][ci.c] = null;
+      ingredientsCollected++;
+    }
+  }
+  updateHUD();
+  return collected.length;
+}
+
+function trackOrders(cell) {
+  if (!mission || mission.type !== 'order') return;
+  if (!cell || cell.type < 0) return;
+  for (const o of orders) {
+    if (o.color === cell.type && o.collected < o.target) o.collected++;
+  }
+}
+
+function isMissionCleared() {
+  if (!mission) return false;
+  if (mission.type === 'score') return stageScore >= target;
+  if (mission.type === 'jelly') return totalJellyRemaining <= 0;
+  if (mission.type === 'ingredient') return ingredientsCollected >= ingredientsToCollect;
+  if (mission.type === 'order') return orders.every(o => o.collected >= o.target);
+  return false;
+}
+
+function missionLabel() {
+  if (!mission) return '';
+  if (mission.type === 'score') return `🎯 目標 <span>${target}</span>`;
+  if (mission.type === 'jelly') return `🟦 ゼリー <span>${totalJellyRemaining}</span>`;
+  if (mission.type === 'ingredient') return `🍒 材料 <span>${ingredientsCollected}/${ingredientsToCollect}</span>`;
+  if (mission.type === 'order') {
+    const parts = orders.map(o => `<span style="color:${COLORS[o.color]}">${SYMBOLS[o.color]}</span><b>${o.collected}/${o.target}</b>`);
+    return `集める ${parts.join(' ')}`;
+  }
+  return '';
+}
+
+function missionDetailText() {
+  if (!mission) return '';
+  if (mission.type === 'score') return `<b>スコア</b>: ${stageScore} / 目標 ${target}`;
+  if (mission.type === 'jelly') return `<b>ゼリー</b>: すべて消去！`;
+  if (mission.type === 'ingredient') return `<b>材料</b>: ${ingredientsCollected} / ${ingredientsToCollect} 収集`;
+  if (mission.type === 'order') {
+    const parts = orders.map(o => `${SYMBOLS[o.color]} ${o.collected}/${o.target}`);
+    return `<b>注文</b>: ${parts.join('、')}`;
+  }
+  return '';
+}
+
+// ===== 障害物（チョコレート / マーマレード） =====
+let chocolateActive = false;
+let marmaladeActive = false;
+
+function setupChocolates(count) {
+  chocolateActive = true;
+  for (let i = 0; i < count; i++) {
+    const positions = [];
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      const x = grid[r][c];
+      if (x && !x.obstacle && !x.ingredient && !x.marmalade && x.type >= 0 && x.special === 'none') {
+        positions.push({ r, c });
+      }
+    }
+    if (positions.length === 0) break;
+    const p = positions[Math.floor(Math.random() * positions.length)];
+    const old = grid[p.r][p.c];
+    old.el.remove();
+    const choc = { type: -4, special: 'none', obstacle: 'chocolate' };
+    choc.el = makeCandyEl(-4, 'none');
+    choc.el.classList.add('obstacle-chocolate');
+    choc.el.textContent = '🍫';
+    setPos(choc.el, p.r, p.c);
+    grid[p.r][p.c] = choc;
+  }
+}
+
+function setupMarmalade(count) {
+  marmaladeActive = true;
+  for (let i = 0; i < count; i++) {
+    const cells = [];
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      const x = grid[r][c];
+      if (x && !x.obstacle && !x.ingredient && !x.marmalade && x.type >= 0 && x.special === 'none') {
+        cells.push(x);
+      }
+    }
+    if (cells.length === 0) break;
+    const cell = cells[Math.floor(Math.random() * cells.length)];
+    cell.marmalade = true;
+    cell.el.classList.add('marmalade');
+  }
+}
+
+function findAdjacentChocolates(toRemove) {
+  const chocs = new Set();
+  for (const k of toRemove) {
+    const [r, c] = k.split(',').map(Number);
+    for (const [dr, dc] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+      const nr = r + dr, nc = c + dc;
+      if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+      const x = grid[nr][nc];
+      if (x && x.obstacle === 'chocolate') chocs.add(`${nr},${nc}`);
+    }
+  }
+  return chocs;
+}
+
+function breakAdjacentMarmalade(toRemove) {
+  const broken = new Set();
+  for (const k of toRemove) {
+    const [r, c] = k.split(',').map(Number);
+    for (const [dr, dc] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+      const nr = r + dr, nc = c + dc;
+      if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+      const x = grid[nr][nc];
+      if (x && x.marmalade && !broken.has(x)) {
+        broken.add(x);
+        x.el.classList.add('breaking');
+        const cellRef = x;
+        setTimeout(() => {
+          cellRef.marmalade = false;
+          cellRef.el.classList.remove('marmalade');
+          cellRef.el.classList.remove('breaking');
+        }, 460);
+      }
+    }
+  }
+}
+
+async function spreadChocolate() {
+  if (!chocolateActive) return;
+  const chocs = [];
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    if (grid[r][c] && grid[r][c].obstacle === 'chocolate') chocs.push({ r, c });
+  }
+  if (chocs.length === 0) return;
+  shuffleArr(chocs);
+  for (const ch of chocs) {
+    const dirs = shuffleArr([[1,0],[-1,0],[0,1],[0,-1]]);
+    for (const [dr, dc] of dirs) {
+      const nr = ch.r + dr, nc = ch.c + dc;
+      if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+      const target = grid[nr][nc];
+      if (!target) continue;
+      if (target.obstacle || target.ingredient) continue;
+      if (target.type < 0) continue;
+      if (target.special !== 'none') continue;
+      if (target.marmalade) continue;
+      target.el.remove();
+      const choc = { type: -4, special: 'none', obstacle: 'chocolate' };
+      choc.el = makeCandyEl(-4, 'none');
+      choc.el.className = 'candy c-bomb obstacle-chocolate spread-in';
+      choc.el.textContent = '🍫';
+      setPos(choc.el, nr, nc);
+      grid[nr][nc] = choc;
+      await sleep(400);
+      choc.el.classList.remove('spread-in');
+      return;
+    }
+  }
+}
+
+function missionIntroText() {
+  if (!mission) return '';
+  if (mission.type === 'score')      return `😺 ${target} にゃん分稼ぐにゃ！`;
+  if (mission.type === 'jelly')      return `😸 ゼリー ${totalJellyRemaining} 個 全部にゃー！`;
+  if (mission.type === 'ingredient') return `🐟 ${ingredientsToCollect} 個 下まで落とすにゃ！`;
+  if (mission.type === 'order') {
+    const parts = orders.map(o => `${SYMBOLS[o.color]}×${o.target}`);
+    return `😻 集めるにゃ！: ${parts.join(' ')}`;
+  }
+  return '';
+}
+
+// ===== 連鎖ボイステキスト =====
+const COMBO_NAMES = {
+  2: '😺 にゃ！',
+  3: '😸 にゃにゃ！',
+  4: '😹 にゃにゃにゃ！',
+  5: '😻 にゃにゃにゃにゃ！',
+  6: '🙀 にゃにゃにゃにゃにゃ！',
+  7: '🐱 にゃにゃにゃにゃにゃにゃ！'
+};
+
+// ===== サウンドエフェクト =====
+let audioCtx = null;
+let audioMuted = false;
+let masterGain = null;
+
+function ensureAudio() {
+  if (audioCtx) return;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 0.35;
+    masterGain.connect(audioCtx.destination);
+  } catch (e) { audioCtx = null; }
+}
+
+function playTone(freq, dur, type = 'sine', vol = 0.3, attack = 0.005) {
+  if (audioMuted || !audioCtx) return;
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  g.gain.setValueAtTime(0, now);
+  g.gain.linearRampToValueAtTime(vol, now + attack);
+  g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+  osc.connect(g); g.connect(masterGain);
+  osc.start(now); osc.stop(now + dur + 0.05);
+}
+
+function playSweep(f1, f2, dur, type = 'sine', vol = 0.3) {
+  if (audioMuted || !audioCtx) return;
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(f1, now);
+  osc.frequency.exponentialRampToValueAtTime(Math.max(20, f2), now + dur);
+  g.gain.setValueAtTime(0, now);
+  g.gain.linearRampToValueAtTime(vol, now + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+  osc.connect(g); g.connect(masterGain);
+  osc.start(now); osc.stop(now + dur + 0.05);
+}
+
+function playSwap() { ensureAudio(); playSweep(400, 700, 0.1, 'sine', 0.18); }
+
+function playMatchSounds(count) {
+  ensureAudio();
+  const n = Math.min(count, 5);
+  for (let i = 0; i < n; i++) {
+    setTimeout(() => {
+      const pitch = 600 + i * 80 + Math.random() * 80;
+      playSweep(pitch, pitch / 2, 0.12, 'sine', 0.22);
+    }, i * 35);
+  }
+}
+
+function playExplosion() {
+  ensureAudio();
+  if (audioMuted || !audioCtx) return;
+  const now = audioCtx.currentTime;
+  const dur = 0.35;
+  const buf = audioCtx.createBuffer(1, Math.floor(audioCtx.sampleRate * dur), audioCtx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) {
+    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 1.5);
+  }
+  const noise = audioCtx.createBufferSource(); noise.buffer = buf;
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(2500, now);
+  filter.frequency.exponentialRampToValueAtTime(150, now + dur);
+  const g = audioCtx.createGain();
+  g.gain.setValueAtTime(0.45, now);
+  g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+  noise.connect(filter); filter.connect(g); g.connect(masterGain);
+  noise.start(); noise.stop(now + dur);
+  playSweep(120, 50, 0.25, 'sine', 0.4);
+}
+
+function playComboSound(combo) {
+  ensureAudio();
+  const freq = 500 * Math.pow(1.15, Math.min(combo, 6));
+  playSweep(freq, freq * 1.3, 0.18, 'triangle', 0.22);
+}
+
+function playClear() {
+  ensureAudio();
+  const notes = [523, 659, 784, 1047];
+  notes.forEach((f, i) => setTimeout(() => playTone(f, 0.35, 'triangle', 0.3), i * 110));
+}
+
+function playGameOverSound() {
+  ensureAudio();
+  const notes = [392, 349, 311, 247];
+  notes.forEach((f, i) => setTimeout(() => playTone(f, 0.4, 'sawtooth', 0.18), i * 180));
+}
+
+function playShuffle() { ensureAudio(); playSweep(200, 800, 0.4, 'sine', 0.2); }
+
+function playStripeSound() {
+  ensureAudio();
+  if (audioMuted || !audioCtx) return;
+  // 高速のシュッ×2
+  playSweep(900, 1700, 0.12, 'sine', 0.3);
+  setTimeout(() => playSweep(800, 1600, 0.12, 'sine', 0.3), 70);
+}
+
+function playFishSound() {
+  ensureAudio();
+  if (audioMuted || !audioCtx) return;
+  // 水のスイープ + バブル感
+  playSweep(1500, 600, 0.35, 'sine', 0.18);
+  setTimeout(() => playSweep(2200, 900, 0.25, 'triangle', 0.14), 80);
+  setTimeout(() => playTone(400, 0.12, 'sine', 0.15), 250);
+}
+
+function playColorBombSound() {
+  ensureAudio();
+  if (audioMuted || !audioCtx) return;
+  // 上昇アルペジオ + キラキラ
+  const notes = [523, 659, 784, 988, 1175, 1397, 1568];
+  notes.forEach((f, i) => {
+    setTimeout(() => playTone(f, 0.16, 'triangle', 0.22), i * 45);
+  });
+  setTimeout(() => playSweep(2000, 800, 0.3, 'sine', 0.18), notes.length * 45);
+}
+
+function toggleMute() {
+  audioMuted = !audioMuted;
+  const btn = document.getElementById('muteBtn');
+  if (btn) btn.textContent = audioMuted ? '🔇' : '🔊';
+}
+
+// ===== 詰み自動シャッフル =====
+async function shuffleBoardIfStuck() {
+  if (findHintMove() !== null) return false;
+  showCombo('🐱 にゃ？にゃ？にゃ？');
+  playShuffle();
+  await sleep(500);
+  let attempts = 0;
+  while (attempts < 50) {
+    const cells = [];
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      const cell = grid[r][c];
+      if (cell && cell.special === 'none' && cell.type >= 0) cells.push(cell);
+    }
+    if (cells.length === 0) break;
+    const types = cells.map(c => c.type);
+    for (let i = types.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [types[i], types[j]] = [types[j], types[i]];
+    }
+    cells.forEach((c, i) => { c.type = types[i]; });
+    if (findMatchedCells().size === 0 && findHintMove() !== null) {
+      cells.forEach(c => {
+        updateCandyVisual(c);
+        c.el.classList.add('shuffling');
+        setTimeout(() => c.el.classList.remove('shuffling'), 600);
+      });
+      await sleep(650);
+      return true;
+    }
+    attempts++;
+  }
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    if (grid[r][c]) updateCandyVisual(grid[r][c]);
+  }
+  return true;
+}
+
+// ===== Sugar Crush ボーナス =====
+async function sugarCrushBonus() {
+  const remaining = movesLimit - movesUsed;
+  if (remaining <= 0) return;
+  showCombo('🐱 ニャー CRUSH！！');
+  playClear();
+  await sleep(900);
+  const specialTypes = ['stripeRow', 'stripeCol', 'wrapped'];
+  const cap = Math.min(remaining, 15);
+  for (let i = 0; i < cap; i++) {
+    const normals = [];
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      const cell = grid[r][c];
+      if (cell && cell.special === 'none' && cell.type >= 0) normals.push(cell);
+    }
+    if (normals.length === 0) break;
+    const cell = normals[Math.floor(Math.random() * normals.length)];
+    cell.special = specialTypes[Math.floor(Math.random() * specialTypes.length)];
+    updateCandyVisual(cell);
+    movesUsed++;
+    updateHUD();
+    playSwap();
+    await sleep(80);
+  }
+  let safety = 30;
+  while (safety-- > 0) {
+    const keys = [];
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      const cell = grid[r][c];
+      if (cell && cell.special !== 'none') keys.push(`${r},${c}`);
+    }
+    if (keys.length === 0) break;
+    const key = keys[Math.floor(Math.random() * keys.length)];
+    const expanded = expandWithSpecials(new Set([key]), new Set());
+    await processRemoval(expanded, 1, []);
+    await cascade();
+  }
+}
+
+// ===== ドラッグ用ヘルパー =====
+function snapBackVisually(el, ms = 200) {
+  if (!el) return;
+  if (el._snapTimer) clearTimeout(el._snapTimer);
+  el.style.transition = `transform ${ms}ms cubic-bezier(0.2, 1.2, 0.4, 1)`;
+  el.style.transform = '';
+  el._snapTimer = setTimeout(() => {
+    el.style.transition = '';
+    el._snapTimer = null;
+  }, ms + 30);
+}
+
+// ===== ドラッグ操作（指追従） =====
+let dragStart = null;
+
+function onBoardPointerDown(e) {
+  if (busy) return;
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  const el = e.target.closest('.candy');
+  if (!el) return;
+  const pos = findPos(el);
+  if (!pos) return;
+  cancelIdleAndHint();
+  ensureAudio();
+  if (audioCtx && audioCtx.state === 'suspended') {
+    try { audioCtx.resume(); } catch (_) {}
+  }
+  e.preventDefault();
+  if (el._snapTimer) { clearTimeout(el._snapTimer); el._snapTimer = null; }
+  el.style.transition = 'none';
+  el.style.zIndex = 6;
+  dragStart = {
+    r: pos.r, c: pos.c,
+    x: e.clientX, y: e.clientY,
+    el, moved: false, pointerId: e.pointerId,
+    partner: null,
+  };
+  try { boardEl.setPointerCapture(e.pointerId); } catch (_) {}
+}
+
+function onBoardPointerMove(e) {
+  if (!dragStart) return;
+  if (e.pointerId !== dragStart.pointerId) return;
+  const dx = e.clientX - dragStart.x;
+  const dy = e.clientY - dragStart.y;
+  const dxAbs = Math.abs(dx);
+  const dyAbs = Math.abs(dy);
+  const max = Math.max(dxAbs, dyAbs);
+  if (max < 3) return;
+  dragStart.moved = true;
+
+  const limit = CELL;
+  let primaryDx = 0, primaryDy = 0;
+  if (dxAbs > dyAbs) {
+    primaryDx = Math.max(-limit, Math.min(limit, dx));
+  } else {
+    primaryDy = Math.max(-limit, Math.min(limit, dy));
+  }
+  dragStart.el.style.transform = `translate(${primaryDx}px, ${primaryDy}px)`;
+
+  let dirR = 0, dirC = 0;
+  if (dxAbs > dyAbs) dirC = primaryDx > 0 ? 1 : -1;
+  else dirR = primaryDy > 0 ? 1 : -1;
+  const partnerR = dragStart.r + dirR;
+  const partnerC = dragStart.c + dirC;
+  const partner = (partnerR >= 0 && partnerR < ROWS && partnerC >= 0 && partnerC < COLS)
+    ? grid[partnerR][partnerC] : null;
+
+  if (dragStart.partner && dragStart.partner !== partner) {
+    snapBackVisually(dragStart.partner.el, 120);
+    dragStart.partner = null;
+  }
+
+  if (partner) {
+    if (dragStart.partner !== partner) {
+      dragStart.partner = partner;
+      if (partner.el._snapTimer) { clearTimeout(partner.el._snapTimer); partner.el._snapTimer = null; }
+      partner.el.style.transition = 'transform 0.13s ease-out';
+    }
+    partner.el.style.transform = `translate(${-primaryDx}px, ${-primaryDy}px)`;
+  }
+
+  if (selected) {
+    const prev = grid[selected.r] && grid[selected.r][selected.c];
+    if (prev && prev.el) prev.el.classList.remove('selected');
+    selected = null;
+  }
+}
+
+function onBoardPointerUp(e) {
+  if (!dragStart) return;
+  if (e.pointerId !== dragStart.pointerId) return;
+  const dx = e.clientX - dragStart.x;
+  const dy = e.clientY - dragStart.y;
+  const dxAbs = Math.abs(dx);
+  const dyAbs = Math.abs(dy);
+  const max = Math.max(dxAbs, dyAbs);
+  const threshold = Math.max(10, CELL * 0.45);
+
+  const dragEl = dragStart.el;
+  const partnerCell = dragStart.partner;
+  try { boardEl.releasePointerCapture(e.pointerId); } catch (_) {}
+
+  if (max < threshold) {
+    dragEl.style.zIndex = '';
+    snapBackVisually(dragEl);
+    if (partnerCell) snapBackVisually(partnerCell.el);
+    const wasMoved = dragStart.moved;
+    dragStart = null;
+    if (!wasMoved) onCandyClick(dragEl);
+    return;
+  }
+
+  let dr = 0, dc = 0;
+  if (dxAbs > dyAbs) dc = dx > 0 ? 1 : -1;
+  else dr = dy > 0 ? 1 : -1;
+  const a = { r: dragStart.r, c: dragStart.c };
+  const b = { r: dragStart.r + dr, c: dragStart.c + dc };
+
+  if (b.r < 0 || b.r >= ROWS || b.c < 0 || b.c >= COLS) {
+    dragEl.style.zIndex = '';
+    snapBackVisually(dragEl);
+    if (partnerCell) snapBackVisually(partnerCell.el);
+    dragStart = null;
+    return;
+  }
+
+  dragEl.style.zIndex = '';
+  dragEl.style.transition = 'none';
+  if (partnerCell) partnerCell.el.style.transition = 'none';
+  dragEl.style.transform = '';
+  if (partnerCell) partnerCell.el.style.transform = '';
+  void dragEl.offsetWidth;
+  dragStart = null;
+  trySwap(a, b);
+  setTimeout(() => {
+    dragEl.style.transition = '';
+    if (partnerCell) partnerCell.el.style.transition = '';
+  }, 30);
+}
+
+function onBoardPointerCancel(e) {
+  if (!dragStart) return;
+  if (e.pointerId !== undefined && e.pointerId !== dragStart.pointerId) return;
+  if (dragStart.el) {
+    dragStart.el.style.zIndex = '';
+    snapBackVisually(dragStart.el);
+  }
+  if (dragStart.partner) snapBackVisually(dragStart.partner.el);
+  dragStart = null;
+  try { boardEl.releasePointerCapture(e.pointerId); } catch (_) {}
+}
+
+boardEl.addEventListener('pointerdown', onBoardPointerDown);
+boardEl.addEventListener('pointermove', onBoardPointerMove);
+boardEl.addEventListener('pointerup', onBoardPointerUp);
+boardEl.addEventListener('pointercancel', onBoardPointerCancel);
+
+// ===== ヒント機能（無操作時に消せる場所を点滅） =====
+const IDLE_MS = 5000;
+let idleTimer = null;
+let hintActive = false;
+
+function swapTypesInPlace(r1, c1, r2, c2) {
+  const t = grid[r1][c1];
+  grid[r1][c1] = grid[r2][c2];
+  grid[r2][c2] = t;
+}
+
+function findHintMove() {
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const cell = grid[r][c];
+      if (cell && cell.special === 'colorbomb') {
+        for (const [dr, dc] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+          const nr = r + dr, nc = c + dc;
+          const other = grid[nr] && grid[nr][nc];
+          if (other && other.type >= 0) return [{ r, c }, { r: nr, c: nc }];
+        }
+      }
+    }
+  }
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (!grid[r][c]) continue;
+      if (c + 1 < COLS && grid[r][c+1]) {
+        swapTypesInPlace(r, c, r, c+1);
+        const found = findMatchedCells().size > 0;
+        swapTypesInPlace(r, c, r, c+1);
+        if (found) return [{ r, c }, { r, c: c+1 }];
+      }
+      if (r + 1 < ROWS && grid[r+1][c]) {
+        swapTypesInPlace(r, c, r+1, c);
+        const found = findMatchedCells().size > 0;
+        swapTypesInPlace(r, c, r+1, c);
+        if (found) return [{ r, c }, { r: r+1, c }];
+      }
+    }
+  }
+  return null;
+}
+
+function showHint() {
+  if (busy) return;
+  if (overlayEl.classList.contains('show')) return;
+  const move = findHintMove();
+  if (!move) return;
+  for (const p of move) {
+    const cell = grid[p.r] && grid[p.r][p.c];
+    if (cell && cell.el) cell.el.classList.add('hint');
+  }
+  hintActive = true;
+}
+
+function startIdleTimer() {
+  if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+  if (busy) return;
+  if (overlayEl.classList.contains('show')) return;
+  idleTimer = setTimeout(showHint, IDLE_MS);
+}
+
+function cancelIdleAndHint() {
+  if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+  if (hintActive) {
+    boardEl.querySelectorAll('.candy.hint').forEach(el => el.classList.remove('hint'));
+    hintActive = false;
+  }
+}
+
+window.addEventListener('resize', () => {
+  readMetrics();
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (grid[r] && grid[r][c] && grid[r][c].el) setPos(grid[r][c].el, r, c);
+    }
+  }
+  // ゼリーマスの位置も再計算
+  boardEl.querySelectorAll('.jelly-cell').forEach(j => {
+    const r = parseInt(j.dataset.r), c = parseInt(j.dataset.c);
+    j.style.left = posX(c) + 'px';
+    j.style.top = posY(r) + 'px';
+  });
+});
+
+startStage();
+</script>
+</body>
+</html>
