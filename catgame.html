@@ -1058,13 +1058,15 @@ function expandWithSpecials(initialSet, protectedSet) {
           if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) newKeys.push(`${nr},${nc}`);
         }
       } else if (cell.special === 'fish') {
-        const target = pickFishTarget(fishPicked);
-        if (target) {
+        // 3匹に分裂して障害物を優先攻撃
+        for (let fi = 0; fi < 3; fi++) {
+          const target = pickFishTarget(fishPicked);
+          if (!target) break;
           fishPicked.add(target);
           newKeys.push(target);
           const [tr, tc] = target.split(',').map(Number);
-          spawnFishFlight(r, c, tr, tc);
-          playFishSound();
+          const delay = fi * 180;
+          setTimeout(() => { spawnFishFlight(r, c, tr, tc); playFishSound(); }, delay);
         }
       } else if (cell.special === 'colorbomb') {
         const counts = {};
