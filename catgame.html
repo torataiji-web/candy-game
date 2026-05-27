@@ -1827,7 +1827,7 @@ async function stageClear() {
   const comboText = bestCombo >= 2 ? (COMBO_NAMES[Math.min(bestCombo,7)] || ('x' + bestCombo)) : 'x' + bestCombo;
   const stars = computeStars();
   showOverlay(
-    `🎉 ステージ ${stage} クリア！`,
+    `🎉 ステージ ${stage} クリアにゃー！！！`,
     `${starsHTML(stars)}${missionDetailText()}<br>最終スコア: ${stageScore}<br>最高連鎖: ${comboText}`,
     '次のステージへ',
     () => { stage++; startStage(); }
