@@ -2286,12 +2286,12 @@ async function spreadChocolate() {
 
 function missionIntroText() {
   if (!mission) return '';
-  if (mission.type === 'score')      return `😺 ${target} にゃん分稼ぐにゃ！`;
-  if (mission.type === 'jelly')      return `😸 ゼリー ${totalJellyRemaining} 個 全部にゃー！`;
-  if (mission.type === 'ingredient') return `🎀 ${ingredientsToCollect} 個 下まで落とすにゃ！`;
+  if (mission.type === 'score')      return `😺 ${target}にゃん分稼ぐにゃ！`;
+  if (mission.type === 'jelly')      return `😸 ゼリー${totalJellyRemaining}個 全部にゃー！`;
+  if (mission.type === 'ingredient') return `🎀 ${ingredientsToCollect}個 下まで落とすにゃ！`;
   if (mission.type === 'order') {
     const parts = orders.map(o => `${SYMBOLS[o.color]}×${o.target}`);
-    return `😻 集めるにゃ！: ${parts.join(' ')}`;
+    return `😻 集めるにゃ！ ${parts.join(' ')}`;
   }
   return '';
 }
