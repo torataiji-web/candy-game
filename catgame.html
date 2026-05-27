@@ -2097,7 +2097,7 @@ async function collectBottomIngredients() {
   for (const ci of collected) {
     ci.cell.el.classList.add('ingredient-collected');
     spawnParticles(posX(ci.c) + CELL/2, posY(ci.r) + CELL/2, 2, 3);
-    spawnScorePopup(posX(ci.c) + CELL/2, posY(ci.r) + CELL/2, '🍒 GET!');
+    spawnScorePopup(posX(ci.c) + CELL/2, posY(ci.r) + CELL/2, '🎀 GET!');
   }
   playClear();
   await sleep(520);
