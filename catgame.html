@@ -158,17 +158,28 @@ h1 {
   width: var(--cell);
   height: var(--cell);
   border-radius: 10px;
-  background: rgba(180, 220, 255, 0.18);
-  border: 2px dashed rgba(180, 220, 255, 0.5);
+  background: rgba(130, 200, 255, 0.38);
+  border: 2.5px solid rgba(100, 180, 255, 0.85);
   pointer-events: none;
   z-index: 0;
-  box-shadow: inset 0 0 8px rgba(180, 220, 255, 0.3);
+  box-shadow: inset 0 0 10px rgba(100, 180, 255, 0.5),
+              0 0 8px rgba(100, 180, 255, 0.4);
+  animation: jellyShimmer 2s ease-in-out infinite;
 }
 .jelly-cell.l2 {
-  background: rgba(120, 180, 255, 0.4);
-  border: 2px solid rgba(120, 180, 255, 0.75);
-  box-shadow: inset 0 0 12px rgba(120, 180, 255, 0.6),
-              0 0 8px rgba(120, 180, 255, 0.4);
+  background: rgba(60, 130, 255, 0.55);
+  border: 3px solid rgba(80, 160, 255, 1.0);
+  box-shadow: inset 0 0 14px rgba(60, 130, 255, 0.7),
+              0 0 14px rgba(80, 160, 255, 0.6);
+  animation: jellyShimmerL2 1.6s ease-in-out infinite;
+}
+@keyframes jellyShimmer {
+  0%, 100% { box-shadow: inset 0 0 10px rgba(100,180,255,0.5), 0 0 8px rgba(100,180,255,0.4); }
+  50%       { box-shadow: inset 0 0 16px rgba(100,200,255,0.75), 0 0 14px rgba(100,200,255,0.6); }
+}
+@keyframes jellyShimmerL2 {
+  0%, 100% { box-shadow: inset 0 0 14px rgba(60,130,255,0.7), 0 0 14px rgba(80,160,255,0.6); }
+  50%       { box-shadow: inset 0 0 22px rgba(60,150,255,0.95), 0 0 22px rgba(80,180,255,0.85); }
 }
 .jelly-cell.broken {
   animation: jellyBreak 0.5s forwards;
