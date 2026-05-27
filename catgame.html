@@ -1459,17 +1459,26 @@ function detectSpecialCombo(ca, cb) {
   const bWrap = sB === 'wrapped';
   const aBomb = sA === 'colorbomb';
   const bBomb = sB === 'colorbomb';
+  const aFish = sA === 'fish';
+  const bFish = sB === 'fish';
 
   if (aBomb && bBomb) return { type: 'bomb-bomb' };
   if (aBomb && bStripe) return { type: 'bomb-stripe', targetType: cb.type };
   if (bBomb && aStripe) return { type: 'bomb-stripe', targetType: ca.type };
   if (aBomb && bWrap)   return { type: 'bomb-wrapped', targetType: cb.type };
   if (bBomb && aWrap)   return { type: 'bomb-wrapped', targetType: ca.type };
+  if (aBomb && bFish)   return { type: 'fish-bomb', targetType: cb.type };
+  if (bBomb && aFish)   return { type: 'fish-bomb', targetType: ca.type };
   if (aBomb && !bBomb && sB === 'none') return { type: 'bomb-normal', targetType: cb.type };
   if (bBomb && !aBomb && sA === 'none') return { type: 'bomb-normal', targetType: ca.type };
   if (aStripe && bStripe)               return { type: 'stripe-stripe' };
   if ((aStripe && bWrap) || (aWrap && bStripe)) return { type: 'stripe-wrapped' };
-  if (aWrap && bWrap)                   return { type: 'wrap-wrap' };
+  if (aFish && bStripe) return { type: 'fish-stripe' };
+  if (bFish && aStripe) return { type: 'fish-stripe' };
+  if (aFish && bWrap)   return { type: 'fish-wrap' };
+  if (bFish && aWrap)   return { type: 'fish-wrap' };
+  if (aFish && bFish)   return { type: 'fish-fish' };
+  if (aWrap && bWrap)   return { type: 'wrap-wrap' };
   return null;
 }
 
@@ -1482,6 +1491,10 @@ function comboName(type) {
     'stripe-stripe':   '😸 十字にゃー！',
     'stripe-wrapped':  '✨ すごいにゃー！',
     'wrap-wrap':       '🙀 メガにゃーん！！',
+    'fish-bomb':       '🐟 にゃ色全員魚！',
+    'fish-stripe':     '🐟 一列にゃー！',
+    'fish-wrap':       '🐟 大爆発にゃ！',
+    'fish-fish':       '🐟🐟 大群にゃ！！',
   })[type] || '💥 COMBO!';
 }
 
@@ -1587,6 +1600,63 @@ async function applySpecialCombo(combo, ca, cb, a, b) {
       // 2回目：落下後に同じ中心で再爆発（本家ルール）
       pendingWrappedDetonations.push({ r: tr, c: tc, size: 2 }); // size:2 → 5×5
       pendingWrappedDetonations.push({ r: tr, c: tc, size: 2 });
+      break;
+    }
+    case 'fish-bomb': {
+      // 同色キャンディをすべて魚に変換して一斉発動
+      const fishType = combo.targetType;
+      for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+        const x = grid[r][c];
+        if (!x || x.ingredient) continue;
+        if (x.type === fishType && x.special === 'none') {
+          x.special = 'fish';
+          updateCandyVisual(x);
+        }
+      }
+      await sleep(450);
+      toRemove.add(`${a.r},${a.c}`);
+      toRemove.add(`${b.r},${b.c}`);
+      for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+        const x = grid[r][c];
+        if (x && x.special === 'fish') toRemove.add(`${r},${c}`);
+      }
+      break;
+    }
+    case 'fish-stripe': {
+      // 魚がストライプに変化して行/列を一気に消去
+      const fishCell = ca.special === 'fish' ? ca : cb;
+      fishCell.special = Math.random() < 0.5 ? 'stripeRow' : 'stripeCol';
+      updateCandyVisual(fishCell);
+      await sleep(300);
+      toRemove.add(`${a.r},${a.c}`);
+      toRemove.add(`${b.r},${b.c}`);
+      break;
+    }
+    case 'fish-wrap': {
+      // 魚が5×5の広範囲爆発
+      ca.special = 'none'; cb.special = 'none';
+      for (let dr = -2; dr <= 2; dr++) for (let dc = -2; dc <= 2; dc++) {
+        const rr = tr + dr, cc = tc + dc;
+        if (rr < 0 || rr >= ROWS || cc < 0 || cc >= COLS) continue;
+        if (grid[rr][cc] && !grid[rr][cc].ingredient) toRemove.add(`${rr},${cc}`);
+      }
+      toRemove.add(`${a.r},${a.c}`);
+      break;
+    }
+    case 'fish-fish': {
+      // 6匹の大群で障害物を一斉攻撃
+      ca.special = 'none'; cb.special = 'none';
+      toRemove.add(`${a.r},${a.c}`);
+      toRemove.add(`${b.r},${b.c}`);
+      const fishPicked2 = new Set();
+      for (let fi = 0; fi < 6; fi++) {
+        const tgt = pickFishTarget(fishPicked2);
+        if (!tgt) break;
+        fishPicked2.add(tgt);
+        toRemove.add(tgt);
+        const [ttr, ttc] = tgt.split(',').map(Number);
+        setTimeout(() => { spawnFishFlight(tr, tc, ttr, ttc); playFishSound(); }, fi * 150);
+      }
       break;
     }
   }
