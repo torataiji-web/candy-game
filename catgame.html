@@ -15,11 +15,13 @@
   --rows: 8;
 }
 @media (max-width: 520px) {
-  :root { --cell: 38px; --gap: 4px; }
-}
-@media (max-width: 420px) {
-  :root { --cell: 34px; --gap: 3px; }
-  body { padding: 8px; }
+  /* body padding 4px×2 + board-wrap padding 6px×2 + border 2px×2 + gap(3px)×9 = 51px */
+  :root {
+    --gap: 3px;
+    --cell: min(calc((100vw - 51px) / 8), 46px);
+  }
+  body { padding: 4px; }
+  .board-wrap { padding: 6px; }
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; }
