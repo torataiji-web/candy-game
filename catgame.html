@@ -806,7 +806,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.25</span></h1>
+<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.26</span></h1>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>
@@ -859,7 +859,19 @@ const overlayBtn2 = document.getElementById('overlay-btn2');
 
 let CELL = 52, GAP = 5;
 let grid = [];
-let stage = 1;
+let stage = (function(){
+  try {
+    const saved = parseInt(localStorage.getItem('molchan_stage'), 10);
+    if (saved >= 1 && saved <= 999) return saved;
+  } catch(e) {}
+  return 1;
+})();
+function saveStage() {
+  try { localStorage.setItem('molchan_stage', String(stage)); } catch(e) {}
+}
+function clearSavedStage() {
+  try { localStorage.removeItem('molchan_stage'); } catch(e) {}
+}
 let stageScore = 0;
 let target = 0;
 let movesLimit = 0;
@@ -1985,6 +1997,7 @@ function showEndingOverlay(comboText) {
     overlayEl.classList.remove('show');
     overlayBtn2.style.cssText = 'display:none;';
     stage = 1;
+    clearSavedStage();
     startStage();
   };
   overlayEl.classList.add('show');
@@ -2029,6 +2042,7 @@ function showGameOverOverlay() {
   overlayBtn2.onclick = () => {
     overlayEl.classList.remove('show');
     stage = 1;
+    clearSavedStage();
     startStage();
   };
   overlayEl.classList.add('show');
@@ -2114,6 +2128,7 @@ function showHelp(isFirstTime) {
 
 function startStage() {
   cancelIdleAndHint();
+  saveStage();
   const d = stageData(stage);
   mission = d;
   target = d.target || 0;
@@ -2168,8 +2183,10 @@ function startStage() {
 }
 
 function restartGame() {
+  if (stage > 1 && !confirm(`ステージ${stage}の進行を消してステージ1から始めますか？`)) return;
   if (overlayEl.classList.contains('show')) overlayEl.classList.remove('show');
   stage = 1;
+  clearSavedStage();
   startStage();
 }
 
