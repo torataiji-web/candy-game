@@ -790,7 +790,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.20</span></h1>
+<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.21</span></h1>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>
@@ -1822,7 +1822,7 @@ function buildInitialGrid() {
 
 function stageData(n) {
   const type = MISSION_CYCLE[(n - 1) % MISSION_CYCLE.length];
-  const tier = Math.floor((n - 1) / MISSION_CYCLE.length) + 1;
+  const tier = Math.min(Math.floor((n - 1) / MISSION_CYCLE.length) + 1, 10);
   let d;
   if (type === 'score') {
     d = { type, target: 2000 + (tier - 1) * 1500, moves: Math.max(18, 28 - tier) };
