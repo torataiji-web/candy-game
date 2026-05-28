@@ -754,11 +754,11 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.06</span></h1>
+<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.07</span></h1>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>
-  <div class="hud-item">スコア <span id="score">0</span><div id="clear-cond" style="font-size:0.68em; opacity:0.75; margin-top:2px; font-weight:400; letter-spacing:0;"></div></div>
+  <div class="hud-item">スコア <span id="score">0</span></div>
   <div class="hud-item warn">残り手数 <span id="moves">0</span></div>
   <div class="hud-item">最高連鎖 <span id="best-combo">0</span></div>
 </div>
@@ -766,6 +766,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
   <div class="board" id="board"></div>
   <div class="combo-display" id="combo"></div>
 </div>
+<div id="clear-cond" style="text-align:center; font-size:0.82em; color:rgba(255,255,255,0.8); margin: 4px 0 2px; letter-spacing:0.03em;"></div>
 <div class="controls">
   <button class="primary" onclick="showHelp(false)">📖 遊び方</button>
   <button onclick="restartGame()">🔄 最初から</button>
