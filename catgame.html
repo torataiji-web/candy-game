@@ -364,29 +364,52 @@ h1 {
   100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 
-/* マーマレード（殻に閉じ込められたキャンディ） */
+/* マーマレード（南京錠で閉じ込められた猫） */
 .candy.marmalade::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255, 165, 0, 0.55), rgba(255, 100, 50, 0.4));
-  border: 3px solid rgba(255, 200, 100, 0.85);
+  background: rgba(0, 0, 0, 0.32);
+  border: 2.5px solid rgba(80, 65, 50, 0.9);
   border-radius: inherit;
   pointer-events: none;
   z-index: 3;
-  box-shadow: inset 0 0 8px rgba(255, 200, 100, 0.6);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
   animation: marmaladePulse 1.6s ease-in-out infinite;
 }
+.candy.marmalade::before {
+  content: '🔒';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: auto;
+  height: auto;
+  background: none;
+  border-radius: 0;
+  transform: translate(-50%, -50%);
+  font-size: calc(var(--cell) * 0.55);
+  line-height: 1;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.8));
+  z-index: 4;
+  pointer-events: none;
+}
 @keyframes marmaladePulse {
-  0%, 100% { opacity: 0.75; }
+  0%, 100% { opacity: 0.8; }
   50%      { opacity: 1; }
 }
 .candy.marmalade.breaking::after {
   animation: marmaladeBreak 0.45s forwards !important;
 }
+.candy.marmalade.breaking::before {
+  animation: lockBreak 0.45s forwards !important;
+}
 @keyframes marmaladeBreak {
   0%   { opacity: 0.8; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.6); filter: blur(4px); }
+}
+@keyframes lockBreak {
+  0%   { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.8) rotate(35deg); filter: blur(3px); }
 }
 
 /* スター評価表示 */
@@ -806,7 +829,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.28</span></h1>
+<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.29</span></h1>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>
