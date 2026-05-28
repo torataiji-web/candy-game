@@ -754,7 +754,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.01</span></h1>
+<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.02</span></h1>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>
@@ -1069,6 +1069,7 @@ function expandWithSpecials(initialSet, protectedSet) {
       const [r, c] = k.split(',').map(Number);
       const cell = grid[r][c];
       if (!cell || !cell.special || cell.special === 'none') continue;
+      specialsFiredInExpansion = true;
       const newKeys = [];
       if (cell.special === 'stripeRow') {
         spawnStripeSweep(r, c, 'row');
@@ -1226,7 +1227,9 @@ async function cascade(swapOrigins) {
       }
       if (toRemove2.size > 0) {
         combo++;
+        specialsFiredInExpansion = false;
         const expanded = expandWithSpecials(toRemove2, new Set());
+        if (specialsFiredInExpansion) combo++;
         await processRemoval(expanded, combo, []);
         continue;
       }
@@ -1262,7 +1265,9 @@ async function cascade(swapOrigins) {
       }
     }
 
+    specialsFiredInExpansion = false;
     const toRemove = expandWithSpecials(matched, protectedSet);
+    if (specialsFiredInExpansion) combo++;
     await processRemoval(toRemove, combo, newSpecials);
 
     originsForThisStep = [];
@@ -1331,9 +1336,13 @@ function showCombo(combo, long = false) {
   if (typeof combo === 'string') {
     text = combo;
   } else {
-    const cap = Math.min(combo, 7);
-    text = COMBO_NAMES[cap] || COMBO_NAMES[7];
-    if (!text) return;
+    if (combo >= 8) {
+      text = `🐱 にゃ×${combo}！`;
+    } else {
+      const cap = Math.min(combo, 7);
+      text = COMBO_NAMES[cap] || COMBO_NAMES[7];
+      if (!text) return;
+    }
   }
   comboEl.textContent = text;
   comboEl.classList.remove('show');
@@ -1345,6 +1354,7 @@ function showCombo(combo, long = false) {
 
 // ===== ラップド爆弾の二重爆発（本家ルール） =====
 let pendingWrappedDetonations = [];
+let specialsFiredInExpansion = false;
 
 // ===== フィッシュのターゲット選択 =====
 function pickFishTarget(picked) {
