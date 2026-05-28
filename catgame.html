@@ -790,7 +790,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.22</span></h1>
+<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.23</span></h1>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>
@@ -1924,7 +1924,7 @@ function showEndingOverlay(comboText) {
     <div style="margin-top:10px;">最終スコア: <b>${stageScore}</b><br>最高連鎖: <b>${comboText}</b></div>
     <p style="margin-top:12px; color:#ffe066; font-size:0.92em;">この先もずっと遊べるにゃ〜🎀</p>
   `;
-  overlayBtn.textContent = '🐟 続けて遊ぶ';
+  overlayBtn.textContent = '🐟 ステージ41以降も続けて遊ぶ';
   overlayBtn.onclick = () => {
     overlayEl.classList.remove('show');
     stage++;
