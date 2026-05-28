@@ -754,7 +754,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.07</span></h1>
+<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.08</span></h1>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>
@@ -766,7 +766,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
   <div class="board" id="board"></div>
   <div class="combo-display" id="combo"></div>
 </div>
-<div id="clear-cond" style="text-align:center; font-size:0.82em; color:rgba(255,255,255,0.8); margin: 4px 0 2px; letter-spacing:0.03em;"></div>
+<div id="clear-cond" style="text-align:center; font-size:0.85em; color:#ff6b6b; font-weight:600; margin: 4px 0 2px; letter-spacing:0.02em; text-shadow: 0 1px 4px rgba(0,0,0,0.5);"></div>
 <div class="controls">
   <button class="primary" onclick="showHelp(false)">📖 遊び方</button>
   <button onclick="restartGame()">🔄 最初から</button>
@@ -814,6 +814,7 @@ let movesLimit = 0;
 let movesUsed = 0;
 let bestCombo = 0;
 let continueUsed = 0; // 1ステージ1回限りコンティニュー
+let missionIntroCache = ''; // ステージ開始時のクリア条件テキスト
 let selected = null;
 let busy = false;
 
@@ -1810,14 +1811,7 @@ function stageData(n) {
 }
 
 function clearCondText() {
-  if (!mission) return '';
-  if (mission.type === 'score')      return `目標 ${target}`;
-  if (mission.type === 'jelly')      return `ゼリー残り ${totalJellyRemaining}`;
-  if (mission.type === 'ingredient') return `材料 ${ingredientsCollected}/${ingredientsToCollect}`;
-  if (mission.type === 'order') {
-    return orders.map(o => `${SYMBOLS[o.color]}${o.collected}/${o.target}`).join(' ');
-  }
-  return '';
+  return missionIntroCache;
 }
 
 function updateHUD() {
@@ -2042,11 +2036,12 @@ function startStage() {
   if (d.chocolates) setupChocolates(d.chocolates);
   if (d.marmalades) setupMarmalade(d.marmalades);
 
+  missionIntroCache = missionIntroText();
   updateHUD();
 
   // ミッション開始バナー
   if (d.type !== 'score' || stage > 1) {
-    showCombo(missionIntroText(), true);
+    showCombo(missionIntroCache, true);
   }
 
   busy = false;
