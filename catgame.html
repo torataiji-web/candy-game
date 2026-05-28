@@ -20,7 +20,7 @@
     var w = window.innerWidth || document.documentElement.clientWidth || 390;
     var cell, gap;
     if (w <= 520) {
-      cell = Math.min(Math.floor((w - 51) / 8), 46);
+      cell = Math.min(Math.floor((w - 51) / 8), 40);
       gap = 3;
     } else {
       cell = 52;
@@ -49,16 +49,16 @@
   /* JSで --cell, --gap を上書きするので、CSSではフォールバックだけ */
   :root {
     --gap: 3px;
-    --cell: 40px;
+    --cell: 38px;
   }
-  body { padding: 4px; }
-  h1 { font-size: 1.2em; margin-bottom: 6px; }
-  .board-wrap { padding: 6px; }
-  .hud { gap: 5px; margin-bottom: 6px; }
-  .hud-item { padding: 4px 8px; font-size: 0.78em; }
-  .controls { margin-top: 8px; gap: 8px; }
-  button { padding: 8px 14px; font-size: 0.88em; }
-  .footer { margin-top: 6px; font-size: 0.7em; }
+  body { padding: 2px; justify-content: flex-start; padding-top: 4px; }
+  h1 { font-size: 1.1em; margin: 0 0 4px; }
+  .board-wrap { padding: 5px; border-radius: 14px; }
+  .hud { gap: 4px; margin-bottom: 4px; }
+  .hud-item { padding: 3px 7px; font-size: 0.75em; border-radius: 9px; }
+  .controls { margin-top: 6px; gap: 6px; }
+  button { padding: 6px 12px; font-size: 0.85em; border-radius: 10px; }
+  .footer { display: none; }
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; }
@@ -789,7 +789,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.17</span></h1>
+<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.18</span></h1>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>
