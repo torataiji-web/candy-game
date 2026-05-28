@@ -7,22 +7,31 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <script>
-// バージョンが一致しないURLなら強制リダイレクト（キャッシュ回避）
+// 自動キャッシュ回避: クエリにtが無ければタイムスタンプ付きで再読込
 (function(){
-  var VER = '1.16';
-  if (location.search !== '?v=' + VER) {
-    location.replace(location.pathname + '?v=' + VER);
+  if (location.search.indexOf('t=') === -1) {
+    var sep = location.search ? '&' : '?';
+    location.replace(location.pathname + location.search + sep + 't=' + Date.now());
   }
 })();
-// モバイル用CSS変数をJSで設定（LINE等のWebViewでCSS min()が効かない場合の対策）
+// CSS変数を強制設定（min()非対応ブラウザでもボードが正しく表示されるよう）
 (function(){
-  var w = window.innerWidth || document.documentElement.clientWidth || 390;
-  if (w <= 520) {
-    var cell = Math.min(Math.floor((w - 51) / 8), 46);
+  function setSize() {
+    var w = window.innerWidth || document.documentElement.clientWidth || 390;
+    var cell, gap;
+    if (w <= 520) {
+      cell = Math.min(Math.floor((w - 51) / 8), 46);
+      gap = 3;
+    } else {
+      cell = 52;
+      gap = 5;
+    }
     var r = document.documentElement;
     r.style.setProperty('--cell', cell + 'px');
-    r.style.setProperty('--gap', '3px');
+    r.style.setProperty('--gap', gap + 'px');
   }
+  setSize();
+  window.addEventListener('resize', setSize);
 })();
 </script>
 <title>MOL-CHAN GAME</title>
@@ -37,10 +46,10 @@
   --rows: 8;
 }
 @media (max-width: 520px) {
-  /* body padding 4px×2 + board-wrap padding 6px×2 + border 2px×2 + gap(3px)×9 = 51px */
+  /* JSで --cell, --gap を上書きするので、CSSではフォールバックだけ */
   :root {
     --gap: 3px;
-    --cell: min(calc((100vw - 51px) / 8), 46px);
+    --cell: 40px;
   }
   body { padding: 4px; }
   h1 { font-size: 1.2em; margin-bottom: 6px; }
@@ -780,7 +789,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.16</span></h1>
+<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.17</span></h1>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>
