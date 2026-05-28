@@ -790,7 +790,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.21</span></h1>
+<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.22</span></h1>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>
@@ -1900,12 +1900,44 @@ async function stageClear() {
   playClear();
   const comboText = bestCombo >= 2 ? (COMBO_NAMES[Math.min(bestCombo,7)] || ('x' + bestCombo)) : 'x' + bestCombo;
   const stars = computeStars();
+
+  // ステージ40でエンディング
+  if (stage === 40) {
+    showEndingOverlay(comboText);
+    return;
+  }
+
   showOverlay(
     `🎉 ステージ ${stage} クリアにゃー！！！`,
     `${starsHTML(stars)}${missionDetailText()}<br>最終スコア: ${stageScore}<br>最高連鎖: ${comboText}`,
     '次のステージへ',
     () => { stage++; startStage(); }
   );
+}
+
+function showEndingOverlay(comboText) {
+  cancelIdleAndHint();
+  overlayTitle.textContent = '🎊 オール クリアにゃー！！ 🎊';
+  overlayDetail.innerHTML = `
+    <div style="font-size:1.1em; margin: 8px 0;">😻 ステージ40 制覇おめでとうにゃ！ 😻</div>
+    <div style="margin: 6px 0;">🐱🐱🐱🐱🐱🐱🐱🐱<br>🐟 全ミッションをクリアしたにゃ 🐟<br>🐱🐱🐱🐱🐱🐱🐱🐱</div>
+    <div style="margin-top:10px;">最終スコア: <b>${stageScore}</b><br>最高連鎖: <b>${comboText}</b></div>
+    <p style="margin-top:12px; color:#ffe066; font-size:0.92em;">この先もずっと遊べるにゃ〜🎀</p>
+  `;
+  overlayBtn.textContent = '🐟 続けて遊ぶ';
+  overlayBtn.onclick = () => {
+    overlayEl.classList.remove('show');
+    stage++;
+    startStage();
+  };
+  overlayBtn2.style.display = 'block';
+  overlayBtn2.textContent = '🔄 最初からやり直す';
+  overlayBtn2.onclick = () => {
+    overlayEl.classList.remove('show');
+    stage = 1;
+    startStage();
+  };
+  overlayEl.classList.add('show');
 }
 
 function gameOver() {
