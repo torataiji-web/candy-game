@@ -199,28 +199,28 @@ h1 {
   width: var(--cell);
   height: var(--cell);
   border-radius: 10px;
-  background: rgba(130, 200, 255, 0.38);
-  border: 2.5px solid rgba(100, 180, 255, 0.85);
+  background: rgba(255, 255, 255, 0.10);
+  border: 2.5px solid rgba(120, 200, 240, 0.95);
   pointer-events: none;
   z-index: 0;
-  box-shadow: inset 0 0 10px rgba(100, 180, 255, 0.5),
-              0 0 8px rgba(100, 180, 255, 0.4);
+  box-shadow: inset 0 0 8px rgba(100, 200, 240, 0.45),
+              0 0 6px rgba(100, 200, 240, 0.35);
   animation: jellyShimmer 2s ease-in-out infinite;
 }
 .jelly-cell.l2 {
-  background: rgba(60, 130, 255, 0.55);
-  border: 3px solid rgba(80, 160, 255, 1.0);
-  box-shadow: inset 0 0 14px rgba(60, 130, 255, 0.7),
-              0 0 14px rgba(80, 160, 255, 0.6);
+  background: rgba(255, 255, 255, 0.15);
+  border: 3px solid rgba(60, 150, 230, 1.0);
+  box-shadow: inset 0 0 12px rgba(60, 150, 230, 0.6),
+              0 0 10px rgba(60, 150, 230, 0.55);
   animation: jellyShimmerL2 1.6s ease-in-out infinite;
 }
 @keyframes jellyShimmer {
-  0%, 100% { box-shadow: inset 0 0 10px rgba(100,180,255,0.5), 0 0 8px rgba(100,180,255,0.4); }
-  50%       { box-shadow: inset 0 0 16px rgba(100,200,255,0.75), 0 0 14px rgba(100,200,255,0.6); }
+  0%, 100% { box-shadow: inset 0 0 8px rgba(100,200,240,0.45), 0 0 6px rgba(100,200,240,0.35); }
+  50%       { box-shadow: inset 0 0 14px rgba(120,220,255,0.7), 0 0 12px rgba(120,220,255,0.55); }
 }
 @keyframes jellyShimmerL2 {
-  0%, 100% { box-shadow: inset 0 0 14px rgba(60,130,255,0.7), 0 0 14px rgba(80,160,255,0.6); }
-  50%       { box-shadow: inset 0 0 22px rgba(60,150,255,0.95), 0 0 22px rgba(80,180,255,0.85); }
+  0%, 100% { box-shadow: inset 0 0 12px rgba(60,150,230,0.6), 0 0 10px rgba(60,150,230,0.55); }
+  50%       { box-shadow: inset 0 0 20px rgba(80,180,250,0.85), 0 0 18px rgba(80,180,250,0.75); }
 }
 .jelly-cell.broken {
   animation: jellyBreak 0.5s forwards;
@@ -806,7 +806,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.26</span></h1>
+<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.27</span></h1>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>
