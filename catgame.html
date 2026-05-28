@@ -24,9 +24,13 @@
     --cell: min(calc((100vw - 51px) / 8), 46px);
   }
   body { padding: 4px; }
+  h1 { font-size: 1.2em; margin-bottom: 6px; }
   .board-wrap { padding: 6px; }
-  .hud { gap: 6px; }
-  .hud-item { padding: 5px 9px; font-size: 0.82em; }
+  .hud { gap: 5px; margin-bottom: 6px; }
+  .hud-item { padding: 4px 8px; font-size: 0.78em; }
+  .controls { margin-top: 8px; gap: 8px; }
+  button { padding: 8px 14px; font-size: 0.88em; }
+  .footer { margin-top: 6px; font-size: 0.7em; }
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; }
@@ -757,7 +761,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.13</span></h1>
+<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.14</span></h1>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>
