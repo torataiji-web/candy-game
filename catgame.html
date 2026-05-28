@@ -9,9 +9,19 @@
 <script>
 // バージョンが一致しないURLなら強制リダイレクト（キャッシュ回避）
 (function(){
-  var VER = '1.15';
+  var VER = '1.16';
   if (location.search !== '?v=' + VER) {
     location.replace(location.pathname + '?v=' + VER);
+  }
+})();
+// モバイル用CSS変数をJSで設定（LINE等のWebViewでCSS min()が効かない場合の対策）
+(function(){
+  var w = window.innerWidth || document.documentElement.clientWidth || 390;
+  if (w <= 520) {
+    var cell = Math.min(Math.floor((w - 51) / 8), 46);
+    var r = document.documentElement;
+    r.style.setProperty('--cell', cell + 'px');
+    r.style.setProperty('--gap', '3px');
   }
 })();
 </script>
@@ -770,7 +780,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.15</span></h1>
+<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.16</span></h1>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>
