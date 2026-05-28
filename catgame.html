@@ -829,7 +829,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.29</span></h1>
+<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.30</span></h1>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>
@@ -969,6 +969,8 @@ function onCandyClick(el) {
   if (!pos) return;
   // 材料は直接選択不可（隣のキャンディで押し出す）
   if (grid[pos.r][pos.c] && grid[pos.r][pos.c].ingredient) return;
+  // ゼリーで閉じ込められた猫は選択不可
+  if (grid[pos.r][pos.c] && grid[pos.r][pos.c].jellyTrapped) return;
 
   if (!selected) {
     selected = pos;
@@ -1006,7 +1008,7 @@ function swapCells(a, b) {
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 function canMatch(cell) {
-  return cell && cell.type >= 0 && !cell.marmalade;
+  return cell && cell.type >= 0 && !cell.marmalade && !cell.jellyTrapped;
 }
 
 function findMatchedCells() {
@@ -1233,8 +1235,39 @@ async function processRemoval(toRemove, comboLevel, newSpecials) {
     breakAdjacentMarmalade(toRemove);
   }
 
-  let hasStripe = false, hasWrapped = false, hasBomb = false;
+  // ゼリー被弾を分離: 特殊効果がゼリー上を通過した場合、その猫は消えずゼリーがダメージ
+  const jellyHits = new Set();
+  const clearSet = new Set();
   for (const k of toRemove) {
+    const [r, c] = k.split(',').map(Number);
+    if (jellyGrid[r] && jellyGrid[r][c] > 0) {
+      jellyHits.add(k);
+    } else {
+      clearSet.add(k);
+    }
+  }
+  // 同色隣接マッチによるゼリー破壊判定
+  if (mission && mission.type === 'jelly') {
+    for (const k of clearSet) {
+      const [r, c] = k.split(',').map(Number);
+      const cell = grid[r][c];
+      if (!cell || cell.type < 0) continue;
+      const myColor = cell.type;
+      for (const [dr, dc] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+        const nr = r + dr, nc = c + dc;
+        if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+        if (jellyGrid[nr] && jellyGrid[nr][nc] > 0) {
+          const trapped = grid[nr][nc];
+          if (trapped && trapped.type === myColor) {
+            jellyHits.add(`${nr},${nc}`);
+          }
+        }
+      }
+    }
+  }
+
+  let hasStripe = false, hasWrapped = false, hasBomb = false;
+  for (const k of clearSet) {
     const [r, c] = k.split(',').map(Number);
     const cell = grid[r][c];
     if (cell && cell.special) {
@@ -1247,14 +1280,14 @@ async function processRemoval(toRemove, comboLevel, newSpecials) {
   if (hasBomb) playColorBombSound();
   else if (hasWrapped) playExplosion();
   else if (hasStripe) playStripeSound();
-  else playMatchSounds(toRemove.size);
+  else playMatchSounds(clearSet.size);
 
-  const gained = toRemove.size * 30 * comboLevel + newSpecials.length * 60;
+  const gained = clearSet.size * 30 * comboLevel + newSpecials.length * 60;
   stageScore += gained;
   scoreEl.textContent = stageScore;
 
   let cx = 0, cy = 0, cn = 0;
-  for (const k of toRemove) {
+  for (const k of clearSet) {
     const [r, c] = k.split(',').map(Number);
     const cell = grid[r][c];
     if (cell) {
@@ -1270,11 +1303,16 @@ async function processRemoval(toRemove, comboLevel, newSpecials) {
 
   await sleep(660);   // pop アニメ(0.60s)完了を待つ
 
-  for (const k of toRemove) {
+  // ゼリーダメージ適用（猫は残して殻だけ削る）
+  for (const k of jellyHits) {
+    const [r, c] = k.split(',').map(Number);
+    hitJelly(r, c);
+  }
+
+  for (const k of clearSet) {
     const [r, c] = k.split(',').map(Number);
     if (grid[r][c]) {
       trackOrders(grid[r][c]);
-      hitJelly(r, c);
       grid[r][c].el.remove();
       grid[r][c] = null;
     }
@@ -1368,23 +1406,45 @@ async function cascade(swapOrigins) {
 
 function applyGravity() {
   for (let c = 0; c < COLS; c++) {
-    const survivors = [];
+    // ゼリー固定セル位置を特定
+    const jellyRows = new Set();
     for (let r = 0; r < ROWS; r++) {
-      if (grid[r][c]) survivors.push(grid[r][c]);
-      grid[r][c] = null;
+      if (grid[r][c] && grid[r][c].jellyTrapped) jellyRows.add(r);
     }
-    const gaps = ROWS - survivors.length;
-    for (let i = 0; i < gaps; i++) {
-      const type = Math.floor(Math.random() * TYPES);
-      const el = makeCandyEl(type, 'none');
-      setPos(el, i - gaps, c);
-      el.classList.add('falling');
-      grid[i][c] = { type, special: 'none', el };
+    // 列をゼリーで区切ったセグメントに分割
+    const segments = [];
+    let segTop = 0;
+    for (let r = 0; r < ROWS; r++) {
+      if (jellyRows.has(r)) {
+        if (segTop < r) segments.push({ top: segTop, bottom: r - 1 });
+        segTop = r + 1;
+      }
     }
-    for (let i = 0; i < survivors.length; i++) {
-      grid[gaps + i][c] = survivors[i];
-      survivors[i].el.classList.add('falling');
+    if (segTop < ROWS) segments.push({ top: segTop, bottom: ROWS - 1 });
+
+    // 各セグメントごとに重力＋補充
+    for (const seg of segments) {
+      const survivors = [];
+      for (let r = seg.top; r <= seg.bottom; r++) {
+        if (grid[r][c]) survivors.push(grid[r][c]);
+        grid[r][c] = null;
+      }
+      const segLen = seg.bottom - seg.top + 1;
+      const gaps = segLen - survivors.length;
+      // 新規猫を上から落下
+      for (let i = 0; i < gaps; i++) {
+        const type = Math.floor(Math.random() * TYPES);
+        const el = makeCandyEl(type, 'none');
+        setPos(el, seg.top + i - gaps, c);
+        el.classList.add('falling');
+        grid[seg.top + i][c] = { type, special: 'none', el };
+      }
+      for (let i = 0; i < survivors.length; i++) {
+        grid[seg.top + gaps + i][c] = survivors[i];
+        survivors[i].el.classList.add('falling');
+      }
     }
+    // ゼリー固定セルは grid に残ったまま（セグメント外なのでループで触らない）
   }
   void boardEl.offsetHeight;
   for (let r = 0; r < ROWS; r++) {
@@ -1794,6 +1854,11 @@ async function applySpecialCombo(combo, ca, cb, a, b) {
 }
 
 async function trySwap(a, b) {
+  // ゼリーで閉じ込められた猫はスワップ不可
+  if ((grid[a.r][a.c] && grid[a.r][a.c].jellyTrapped) ||
+      (grid[b.r][b.c] && grid[b.r][b.c].jellyTrapped)) {
+    return;
+  }
   busy = true;
   playSwap();
   const ca = grid[a.r][a.c];
@@ -2090,7 +2155,7 @@ function showHelp(isFirstTime) {
       <div class="section-title">🎯 ミッション（ステージごとに変化）</div>
       <p>4種類のクリア条件が <b>ステージごとに循環</b> します:</p>
       <p>・<b>🎯 スコア</b>: 指定ポイントを稼ぐにゃ</p>
-      <p>・<b>🟦 ゼリー消去</b>: 盤面の青いタイル（ゼリー）の上の猫を消して、すべてのゼリーを破壊する。濃い青は2回当てないと消えないにゃ</p>
+      <p>・<b>🟦 ゼリー消去</b>: ゼリーの中の猫は<b>動かせない</b>。<b>ゼリーの隣で、中の猫と同じ色のマッチ</b>を起こすか、<b>特殊もるちゃんの効果</b>で殻を割って解放するにゃ。濃い青は2回当てないと消えない。盤面の全ゼリーを破壊すればクリア！</p>
       <p>・<b>🎀 材料</b>: 🎀🥛を最下段まで落として収集する（特殊もるちゃんの爆発でも消えないにゃ）</p>
       <p>・<b>🎨 注文</b>: 指定された色の猫を指定匹数消すにゃ</p>
       <p>どのミッションも <b>残り手数</b> 以内に達成すれば次のステージへ。失敗なら <b>コンティニュー（+5手）</b> または ゲームオーバーにゃ。</p>
@@ -2105,7 +2170,7 @@ function showHelp(isFirstTime) {
       <hr>
       <div class="section-title">🍫 障害物（ステージ2以降で登場）</div>
       <p>・<b>🍫 チョコレート</b>: 動かせない・消せないブロック。<b>毎ターン1個ずつ増殖</b>するので、隣でマッチして消すにゃ</p>
-      <p>・<b>マーマレード（殻入り猫）</b>: 殻に閉じ込められて<b>マッチできない</b>。隣でマッチすると殻が割れて中の猫が解放されるにゃ</p>
+      <p>・<b>🔒 南京錠もるちゃん（マーマレード）</b>: 南京錠に閉じ込められて<b>動かせない・マッチもできない</b>。<b>隣でどんな色でもマッチ</b>すると鍵が壊れて中の猫が解放されるにゃ</p>
 
       <hr>
       <div class="section-title">💥 特殊もるちゃんの組み合わせ</div>
@@ -2238,18 +2303,26 @@ function generateOrders(tier) {
 }
 
 function setupJellyMission(d) {
+  // 通常の猫がいるマスのみゼリー設置対象
   const all = [];
-  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) all.push({ r, c });
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    const x = grid[r][c];
+    if (x && x.type >= 0 && x.special === 'none' && !x.obstacle && !x.ingredient && !x.marmalade) {
+      all.push({ r, c });
+    }
+  }
   shuffleArr(all);
   jellyGrid = [];
   for (let r = 0; r < ROWS; r++) jellyGrid.push(new Array(COLS).fill(0));
   totalJellyRemaining = 0;
   const dbl = d.jellyDouble || 0;
-  for (let i = 0; i < d.jellyCount; i++) {
+  const count = Math.min(d.jellyCount, all.length);
+  for (let i = 0; i < count; i++) {
     const p = all[i];
     const layer = i < dbl ? 2 : 1;
     jellyGrid[p.r][p.c] = layer;
     totalJellyRemaining += layer;
+    if (grid[p.r][p.c]) grid[p.r][p.c].jellyTrapped = true;
   }
   renderJelly();
 }
@@ -2282,6 +2355,9 @@ function hitJelly(r, c) {
     } else {
       j.classList.remove('l2');
     }
+  }
+  if (jellyGrid[r][c] === 0 && grid[r] && grid[r][c]) {
+    grid[r][c].jellyTrapped = false;
   }
 }
 
@@ -2386,7 +2462,7 @@ function setupChocolates(count) {
     const positions = [];
     for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
       const x = grid[r][c];
-      if (x && !x.obstacle && !x.ingredient && !x.marmalade && x.type >= 0 && x.special === 'none') {
+      if (x && !x.obstacle && !x.ingredient && !x.marmalade && !x.jellyTrapped && x.type >= 0 && x.special === 'none') {
         positions.push({ r, c });
       }
     }
@@ -2409,7 +2485,7 @@ function setupMarmalade(count) {
     const cells = [];
     for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
       const x = grid[r][c];
-      if (x && !x.obstacle && !x.ingredient && !x.marmalade && x.type >= 0 && x.special === 'none') {
+      if (x && !x.obstacle && !x.ingredient && !x.marmalade && !x.jellyTrapped && x.type >= 0 && x.special === 'none') {
         cells.push(x);
       }
     }
@@ -2659,7 +2735,7 @@ async function shuffleBoardIfStuck() {
     const cells = [];
     for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
       const cell = grid[r][c];
-      if (cell && cell.special === 'none' && cell.type >= 0) cells.push(cell);
+      if (cell && cell.special === 'none' && cell.type >= 0 && !cell.jellyTrapped) cells.push(cell);
     }
     if (cells.length === 0) break;
     const types = cells.map(c => c.type);
@@ -2748,6 +2824,8 @@ function onBoardPointerDown(e) {
   if (!pos) return;
   // 材料は直接ドラッグ不可
   if (grid[pos.r][pos.c] && grid[pos.r][pos.c].ingredient) return;
+  // ゼリーで閉じ込められた猫はドラッグ不可
+  if (grid[pos.r][pos.c] && grid[pos.r][pos.c].jellyTrapped) return;
   cancelIdleAndHint();
   ensureAudio();
   if (audioCtx && audioCtx.state === 'suspended') {
@@ -2899,25 +2977,26 @@ function findHintMove() {
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
       const cell = grid[r][c];
-      if (cell && cell.special === 'colorbomb') {
+      if (cell && cell.special === 'colorbomb' && !cell.jellyTrapped) {
         for (const [dr, dc] of [[1,0],[-1,0],[0,1],[0,-1]]) {
           const nr = r + dr, nc = c + dc;
           const other = grid[nr] && grid[nr][nc];
-          if (other && other.type >= 0) return [{ r, c }, { r: nr, c: nc }];
+          if (other && other.type >= 0 && !other.jellyTrapped) return [{ r, c }, { r: nr, c: nc }];
         }
       }
     }
   }
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
-      if (!grid[r][c]) continue;
-      if (c + 1 < COLS && grid[r][c+1]) {
+      const cur = grid[r][c];
+      if (!cur || cur.jellyTrapped) continue;
+      if (c + 1 < COLS && grid[r][c+1] && !grid[r][c+1].jellyTrapped) {
         swapTypesInPlace(r, c, r, c+1);
         const found = findMatchedCells().size > 0;
         swapTypesInPlace(r, c, r, c+1);
         if (found) return [{ r, c }, { r, c: c+1 }];
       }
-      if (r + 1 < ROWS && grid[r+1][c]) {
+      if (r + 1 < ROWS && grid[r+1][c] && !grid[r+1][c].jellyTrapped) {
         swapTypesInPlace(r, c, r+1, c);
         const found = findMatchedCells().size > 0;
         swapTypesInPlace(r, c, r+1, c);
