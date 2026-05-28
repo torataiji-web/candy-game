@@ -754,7 +754,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.03</span></h1>
+<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.04</span></h1>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>
@@ -780,6 +780,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
     <div class="overlay-title" id="overlay-title"></div>
     <div class="overlay-detail" id="overlay-detail"></div>
     <button class="primary" id="overlay-btn">次へ</button>
+    <button id="overlay-btn2" style="display:none; margin-top:8px; width:100%; padding:12px; font-size:1em; background:rgba(255,255,255,0.12); color:#fff; border:1.5px solid rgba(255,255,255,0.35); border-radius:12px; cursor:pointer;">あきらめる</button>
   </div>
 </div>
 
@@ -801,6 +802,7 @@ const overlayEl = document.getElementById('overlay');
 const overlayTitle = document.getElementById('overlay-title');
 const overlayDetail = document.getElementById('overlay-detail');
 const overlayBtn = document.getElementById('overlay-btn');
+const overlayBtn2 = document.getElementById('overlay-btn2');
 
 let CELL = 52, GAP = 5;
 let grid = [];
@@ -810,6 +812,7 @@ let target = 0;
 let movesLimit = 0;
 let movesUsed = 0;
 let bestCombo = 0;
+let continueUsed = 0; // 1ステージ1回限りコンティニュー
 let selected = null;
 let busy = false;
 
@@ -1864,12 +1867,7 @@ function gameOver() {
   busy = true;
   cancelIdleAndHint();
   playGameOverSound();
-  showOverlay(
-    `💔 ゲームオーバー`,
-    `ステージ ${stage} 失敗<br>${missionDetailText()}`,
-    'もう一度',
-    () => { stage = 1; startStage(); }
-  );
+  showGameOverOverlay();
 }
 
 function showOverlay(title, detailHTML, btnText, onBtn) {
@@ -1881,6 +1879,43 @@ function showOverlay(title, detailHTML, btnText, onBtn) {
     overlayEl.classList.remove('show');
     onBtn();
   };
+  overlayBtn2.style.display = 'none';
+  overlayEl.classList.add('show');
+}
+
+function showGameOverOverlay() {
+  cancelIdleAndHint();
+  const canContinue = continueUsed < 1;
+  overlayTitle.textContent = '💔 ゲームオーバー';
+  overlayDetail.innerHTML = `ステージ ${stage} 失敗<br>${missionDetailText()}` +
+    (canContinue ? `<p style="margin-top:12px; color:#ffe066; font-size:0.92em;">🐱 +5手でコンティニューできるにゃ！</p>` : '');
+
+  if (canContinue) {
+    overlayBtn.textContent = '🐟 コンティニュー（+5手）';
+    overlayBtn.onclick = () => {
+      overlayEl.classList.remove('show');
+      continueUsed++;
+      movesLimit += 5;
+      updateHUD();
+      busy = false;
+      startIdleTimer();
+    };
+    overlayBtn2.style.display = 'block';
+    overlayBtn2.textContent = 'あきらめる（ステージ1へ）';
+    overlayBtn2.onclick = () => {
+      overlayEl.classList.remove('show');
+      stage = 1;
+      startStage();
+    };
+  } else {
+    overlayBtn.textContent = 'もう一度（ステージ1へ）';
+    overlayBtn.onclick = () => {
+      overlayEl.classList.remove('show');
+      stage = 1;
+      startStage();
+    };
+    overlayBtn2.style.display = 'none';
+  }
   overlayEl.classList.add('show');
 }
 
@@ -1906,7 +1941,7 @@ function showHelp(isFirstTime) {
       <p>・<b>🟦 ゼリー消去</b>: 盤面の青いタイル（ゼリー）の上の猫を消して、すべてのゼリーを破壊する。濃い青は2回当てないと消えないにゃ</p>
       <p>・<b>🎀 材料</b>: 🎀🥛を最下段まで落として収集する（特殊もるちゃんの爆発でも消えないにゃ）</p>
       <p>・<b>🎨 注文</b>: 指定された色の猫を指定匹数消すにゃ</p>
-      <p>どのミッションも <b>残り手数</b> 以内に達成すれば次のステージへ。失敗ならゲームオーバーにゃ。</p>
+      <p>どのミッションも <b>残り手数</b> 以内に達成すれば次のステージへ。失敗なら <b>コンティニュー（+5手）</b> または ゲームオーバーにゃ。</p>
 
       <hr>
       <div class="section-title">✨ 特殊もるちゃんの作り方</div>
@@ -1971,6 +2006,7 @@ function startStage() {
   movesUsed = 0;
   stageScore = 0;
   bestCombo = 0;
+  continueUsed = 0;
   selected = null;
   busy = true;
 
