@@ -25,6 +25,8 @@
   }
   body { padding: 4px; }
   .board-wrap { padding: 6px; }
+  .hud { gap: 6px; }
+  .hud-item { padding: 5px 9px; font-size: 0.82em; }
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; }
@@ -66,6 +68,7 @@ h1 {
   flex-wrap: wrap;
   justify-content: center;
   max-width: 600px;
+  width: 100%;
 }
 .hud-item {
   background: rgba(255,255,255,0.14);
@@ -754,7 +757,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.12</span></h1>
+<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.13</span></h1>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>
