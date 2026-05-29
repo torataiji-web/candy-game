@@ -7,12 +7,14 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <script>
-// 自動キャッシュ回避: クエリにtが無ければタイムスタンプ付きで再読込
+// 自動キャッシュ回避: 1セッションに1回タイムスタンプ付きで再読込（PWAでも毎起動最新版）
 (function(){
-  if (location.search.indexOf('t=') === -1) {
-    var sep = location.search ? '&' : '?';
-    location.replace(location.pathname + location.search + sep + 't=' + Date.now());
-  }
+  try {
+    if (!sessionStorage.getItem('cb_v')) {
+      sessionStorage.setItem('cb_v', '1');
+      location.replace(location.pathname + '?t=' + Date.now() + location.hash);
+    }
+  } catch(e) {}
 })();
 // CSS変数を強制設定（min()非対応ブラウザでもボードが正しく表示されるよう）
 (function(){
@@ -35,6 +37,15 @@
 })();
 </script>
 <title>MOL-CHAN GAME</title>
+<!-- PWA設定 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="もるちゃん">
+<meta name="theme-color" content="#9d4edd">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
@@ -829,7 +840,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.31</span></h1>
+<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.32</span></h1>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>

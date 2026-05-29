@@ -1,0 +1,20 @@
+{
+  "name": "MOL-CHAN GAME",
+  "short_name": "もるちゃん",
+  "description": "もるちゃんと一緒に遊ぶマッチ3パズルゲーム",
+  "start_url": "./catgame.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ff6ec7",
+  "theme_color": "#9d4edd",
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
