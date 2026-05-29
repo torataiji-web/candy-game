@@ -352,18 +352,18 @@ h1 {
 }
 
 /* ===== 障害物 ===== */
-/* チョコレート（自己増殖） */
+/* ネズミ（自己増殖の障害物） */
 .candy.obstacle-chocolate {
   background:
-    radial-gradient(circle at 30% 25%, #a87142 0%, transparent 40%),
-    radial-gradient(circle at 70% 70%, #5d3a1e 0%, #2d1a0e 100%) !important;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.5),
-              inset -3px -4px 8px rgba(0,0,0,0.5),
-              inset 3px 3px 6px rgba(255,200,150,0.2) !important;
-  border-radius: 18% !important;
-  font-size: calc(var(--cell) * 0.65) !important;
+    radial-gradient(circle at 30% 25%, #e6dfd6 0%, transparent 45%),
+    radial-gradient(circle at 70% 70%, #9c948b 0%, #4d4641 100%) !important;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.45),
+              inset -3px -4px 8px rgba(0,0,0,0.4),
+              inset 3px 3px 6px rgba(255,255,255,0.22) !important;
+  border-radius: 35% !important;
+  font-size: calc(var(--cell) * 0.72) !important;
   cursor: not-allowed;
-  color: rgba(255, 220, 180, 0.85) !important;
+  color: rgba(255, 255, 255, 0.95) !important;
 }
 .candy.obstacle-chocolate::before { display: none; }
 .candy.obstacle-chocolate.spread-in {
@@ -889,7 +889,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.34</span></h1>
+<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.35</span></h1>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>
@@ -2106,7 +2106,7 @@ function showEndingOverlay(comboText) {
     '😺 1匹のもるちゃんがいたにゃ',
     '🐱 ある日 同じ色の仲間に出会い',
     '😸 みんなで旅に出ることにしたにゃ',
-    '🍫 道は チョコレートで塞がれ',
+    '🐭 道は ネズミに塞がれ',
     '🟦 ゼリーが行く手を阻んだ',
     '🎀 でも 連鎖の力を信じて',
     '😻 もるちゃんたちは進み続けたにゃ',
@@ -2240,8 +2240,8 @@ function showHelp(isFirstTime) {
       <p>・<b>5匹</b>を直線で消す → <b>カラーボム ✺</b>（虹色の玉、同じ色を全部消すにゃ！）</p>
 
       <hr>
-      <div class="section-title">🍫 障害物（ステージ2以降で登場）</div>
-      <p>・<b>🍫 チョコレート</b>: 動かせない・消せないブロック。<b>毎ターン1個ずつ増殖</b>するので、隣でマッチして消すにゃ</p>
+      <div class="section-title">🐭 障害物（ステージ2以降で登場）</div>
+      <p>・<b>🐭 ネズミ</b>: 動かせない・消せない邪魔者。<b>毎ターン1匹ずつ増える</b>ので、隣でマッチして追い払うにゃ！</p>
       <p>・<b>🔒 南京錠もるちゃん</b>: 南京錠に閉じ込められて<b>動かせない・マッチもできない</b>。<b>隣でどんな色でもマッチ</b>すると鍵が壊れて中の猫が解放されるにゃ</p>
 
       <hr>
@@ -2545,7 +2545,7 @@ function setupChocolates(count) {
     const choc = { type: -4, special: 'none', obstacle: 'chocolate' };
     choc.el = makeCandyEl(-4, 'none');
     choc.el.classList.add('obstacle-chocolate');
-    choc.el.textContent = '🍫';
+    choc.el.textContent = '🐭';
     setPos(choc.el, p.r, p.c);
     grid[p.r][p.c] = choc;
   }
@@ -2627,7 +2627,7 @@ async function spreadChocolate() {
       const choc = { type: -4, special: 'none', obstacle: 'chocolate' };
       choc.el = makeCandyEl(-4, 'none');
       choc.el.className = 'candy c-bomb obstacle-chocolate spread-in';
-      choc.el.textContent = '🍫';
+      choc.el.textContent = '🐭';
       setPos(choc.el, nr, nc);
       grid[nr][nc] = choc;
       await sleep(400);
