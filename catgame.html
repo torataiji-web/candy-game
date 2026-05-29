@@ -637,6 +637,15 @@ button.shake { animation: btnShake 0.4s ease-in-out; }
               left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* クリア後ボーナス演出: 1.5倍速 */
+.board.bonus-fast .candy.popping {
+  animation-duration: 0.40s !important;
+}
+.board.bonus-fast .candy.falling {
+  transition: top 0.41s cubic-bezier(0.34, 1.2, 0.6, 1),
+              left 0.19s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
 .particle {
   position: absolute;
   width: 10px;
@@ -899,7 +908,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.40</span></h1>
+<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.41</span></h1>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>
@@ -1082,7 +1091,8 @@ function swapCells(a, b) {
   setPos(cb.el, a.r, a.c);
 }
 
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+let timeScale = 1; // 演出速度倍率（1=通常, 1.5=1.5倍速）
+function sleep(ms) { return new Promise(r => setTimeout(r, ms / timeScale)); }
 
 function canMatch(cell) {
   // ゼリーで閉じ込められた猫もマッチ判定には参加する（殻だけがダメージを受ける）
@@ -2850,38 +2860,46 @@ async function shuffleBoardIfStuck() {
 async function sugarCrushBonus() {
   const remaining = movesLimit - movesUsed;
   if (remaining <= 0) return;
-  showCombo('🐱 クリアにゃ！！');
-  playClear();
-  await sleep(900);
-  const specialTypes = ['stripeRow', 'stripeCol', 'wrapped'];
-  const cap = Math.min(remaining, 15);
-  for (let i = 0; i < cap; i++) {
-    const normals = [];
-    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
-      const cell = grid[r][c];
-      if (cell && cell.special === 'none' && cell.type >= 0) normals.push(cell);
+  // クリア後ボーナス演出を1.5倍速で再生
+  timeScale = 1.5;
+  boardEl.classList.add('bonus-fast');
+  try {
+    showCombo('🐱 クリアにゃ！！');
+    playClear();
+    await sleep(900);
+    const specialTypes = ['stripeRow', 'stripeCol', 'wrapped'];
+    const cap = Math.min(remaining, 15);
+    for (let i = 0; i < cap; i++) {
+      const normals = [];
+      for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+        const cell = grid[r][c];
+        if (cell && cell.special === 'none' && cell.type >= 0) normals.push(cell);
+      }
+      if (normals.length === 0) break;
+      const cell = normals[Math.floor(Math.random() * normals.length)];
+      cell.special = specialTypes[Math.floor(Math.random() * specialTypes.length)];
+      updateCandyVisual(cell);
+      movesUsed++;
+      updateHUD();
+      playSwap();
+      await sleep(80);
     }
-    if (normals.length === 0) break;
-    const cell = normals[Math.floor(Math.random() * normals.length)];
-    cell.special = specialTypes[Math.floor(Math.random() * specialTypes.length)];
-    updateCandyVisual(cell);
-    movesUsed++;
-    updateHUD();
-    playSwap();
-    await sleep(80);
-  }
-  let safety = 30;
-  while (safety-- > 0) {
-    const keys = [];
-    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
-      const cell = grid[r][c];
-      if (cell && cell.special !== 'none') keys.push(`${r},${c}`);
+    let safety = 30;
+    while (safety-- > 0) {
+      const keys = [];
+      for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+        const cell = grid[r][c];
+        if (cell && cell.special !== 'none') keys.push(`${r},${c}`);
+      }
+      if (keys.length === 0) break;
+      const key = keys[Math.floor(Math.random() * keys.length)];
+      const expanded = expandWithSpecials(new Set([key]), new Set());
+      await processRemoval(expanded, 1, []);
+      await cascade();
     }
-    if (keys.length === 0) break;
-    const key = keys[Math.floor(Math.random() * keys.length)];
-    const expanded = expandWithSpecials(new Set([key]), new Set());
-    await processRemoval(expanded, 1, []);
-    await cascade();
+  } finally {
+    timeScale = 1;
+    boardEl.classList.remove('bonus-fast');
   }
 }
 
