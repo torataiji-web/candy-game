@@ -900,6 +900,12 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
   cursor: default;
   flex: 0 0 auto;
 }
+.candy.demo.sm {
+  --cell: 24px;
+  width: 24px;
+  height: 24px;
+  margin: 0 1px;
+}
 
 .overlay {
   position: fixed;
@@ -993,7 +999,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<div class="version-badge">v1.45</div>
+<div class="version-badge">v1.46</div>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>
@@ -1031,7 +1037,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
     <button class="title-btn" onclick="showHelp(false)">📖 遊び方</button>
     <button class="title-btn" id="title-mute" onclick="toggleMute()">🔊 サウンド</button>
   </div>
-  <div class="title-version">v1.45</div>
+  <div class="title-version">v1.46</div>
 </div>
 
 <div class="overlay" id="overlay">
@@ -2356,16 +2362,16 @@ function showHelp(isFirstTime) {
       <hr>
       <div class="section-title">💥 特殊もるちゃんの組み合わせ</div>
       <p>2つの特殊もるちゃんを <b>隣り合わせてスワップ</b> すると大爆発にゃ！</p>
-      <p>・<b>ストライプ × ストライプ</b> → 😸 十字にゃー！（行+列を同時消去）</p>
-      <p>・<b>ストライプ × ラップド</b> → ✨ すごいにゃー！（縦3行＋横3列の超広範囲）</p>
-      <p>・<b>ラップド × ラップド</b> → 🙀 メガにゃーん！！（5×5メガ爆発）</p>
-      <p>・<b>カラーボム × ストライプ</b> → 😹 ごはーん！！（同色を全部ストライプに変えて連続発火）</p>
-      <p>・<b>カラーボム × ラップド</b> → 🙀 ばくはつにゃ！（同色を全部ラップドに変えて連続爆発）</p>
-      <p>・<b>カラーボム × カラーボム</b> → 🐱 ぜんぶにゃー！！（盤面全消し！）</p>
-      <p>・<b>フィッシュ × カラーボム</b> → 🐟 にゃ色全員魚！（同色が全部フィッシュに変化して一斉攻撃）</p>
-      <p>・<b>フィッシュ × ストライプ</b> → 🐟 一列にゃー！（フィッシュがストライプに変化して発射）</p>
-      <p>・<b>フィッシュ × ラップド</b> → 🐟 大爆発にゃ！（5×5の広範囲爆発）</p>
-      <p>・<b>フィッシュ × フィッシュ</b> → 🐟🐟 大群にゃ！！（6匹が一斉に障害物を攻撃）</p>
+      <p>・<span class="candy demo sm c2 s-stripeRow">😹</span>×<span class="candy demo sm c4 s-stripeCol">😻</span> → 😸 十字にゃー！（行+列を同時消去）</p>
+      <p>・<span class="candy demo sm c2 s-stripeRow">😹</span>×<span class="candy demo sm c4 s-wrapped">😻</span> → ✨ すごいにゃー！（縦3行＋横3列の超広範囲）</p>
+      <p>・<span class="candy demo sm c4 s-wrapped">😻</span>×<span class="candy demo sm c0 s-wrapped">😾</span> → 🙀 メガにゃーん！！（5×5メガ爆発）</p>
+      <p>・<span class="candy demo sm s-colorbomb">★</span>×<span class="candy demo sm c2 s-stripeRow">😹</span> → 😹 ごはーん！！（同色を全部ストライプに変えて連続発火）</p>
+      <p>・<span class="candy demo sm s-colorbomb">★</span>×<span class="candy demo sm c4 s-wrapped">😻</span> → 🙀 ばくはつにゃ！（同色を全部ラップドに変えて連続爆発）</p>
+      <p>・<span class="candy demo sm s-colorbomb">★</span>×<span class="candy demo sm s-colorbomb">★</span> → 🐱 ぜんぶにゃー！！（盤面全消し！）</p>
+      <p>・<span class="candy demo sm s-fish">🐟</span>×<span class="candy demo sm s-colorbomb">★</span> → 🐟 にゃ色全員魚！（同色が全部フィッシュに変化して一斉攻撃）</p>
+      <p>・<span class="candy demo sm s-fish">🐟</span>×<span class="candy demo sm c2 s-stripeRow">😹</span> → 🐟 一列にゃー！（フィッシュがストライプに変化して発射）</p>
+      <p>・<span class="candy demo sm s-fish">🐟</span>×<span class="candy demo sm c4 s-wrapped">😻</span> → 🐟 大爆発にゃ！（5×5の広範囲爆発）</p>
+      <p>・<span class="candy demo sm s-fish">🐟</span>×<span class="candy demo sm s-fish">🐟</span> → 🐟🐟 大群にゃ！！（6匹が一斉に障害物を攻撃）</p>
 
       <hr>
       <div class="section-title">😺 にゃ連鎖ボイス</div>
