@@ -816,6 +816,80 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
   max-width: 460px;
 }
 
+/* ===== タイトル画面 ===== */
+.title-screen {
+  position: fixed;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 900;
+  background:
+    radial-gradient(circle at 18% 12%, #ff6ec7 0%, transparent 42%),
+    radial-gradient(circle at 82% 18%, #9d4edd 0%, transparent 46%),
+    radial-gradient(circle at 50% 92%, #ffd56e 0%, transparent 42%),
+    #2a1a4a;
+  text-align: center;
+  padding: 20px;
+}
+.title-screen.show { display: flex; animation: titleFade 0.5s ease-out; }
+@keyframes titleFade { 0% { opacity: 0; } 100% { opacity: 1; } }
+.title-logo {
+  font-size: clamp(2.2em, 11vw, 3.6em);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  background: linear-gradient(45deg, #fff, #ffeebb, #ffb8d8, #fff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 3px 12px rgba(255,120,200,0.6));
+  margin-bottom: 10px;
+}
+.title-cats {
+  font-size: clamp(1.6em, 7vw, 2.4em);
+  letter-spacing: 4px;
+  margin-bottom: 28px;
+  animation: titleCatsBob 2.4s ease-in-out infinite;
+}
+@keyframes titleCatsBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+.title-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: min(320px, 82vw);
+}
+.title-btn {
+  padding: 15px 20px;
+  font-size: 1.1em;
+  font-weight: 700;
+  border-radius: 16px;
+  border: 2px solid rgba(255,255,255,0.4);
+  background: rgba(255,255,255,0.16);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.2s;
+}
+.title-btn:hover { transform: scale(1.04); background: rgba(255,255,255,0.26); }
+.title-btn:active { transform: scale(0.97); }
+.title-btn.primary {
+  background: linear-gradient(135deg, #ff6ec7, #9d4edd);
+  border-color: rgba(255,255,255,0.6);
+  font-size: 1.25em;
+  box-shadow: 0 6px 20px rgba(157,78,221,0.5);
+}
+.title-btn.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
+.title-version {
+  margin-top: 22px;
+  font-size: 0.8em;
+  color: rgba(255,255,255,0.55);
+}
+
 .overlay {
   position: fixed;
   inset: 0;
@@ -908,7 +982,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.41</span></h1>
+<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.42</span></h1>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>
@@ -935,6 +1009,18 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
   <div class="install-title" id="install-title">📲 アプリにして遊ぶ</div>
   <div id="install-body"></div>
   <button class="install-action" id="install-action" style="display:none;" onclick="triggerInstallPrompt()">ホーム画面に追加</button>
+</div>
+
+<div class="title-screen" id="title-screen">
+  <div class="title-logo">🐱 MOL-CHAN<br>GAME 🐱</div>
+  <div class="title-cats">😾😸😹😺😻🙀</div>
+  <div class="title-menu">
+    <button class="title-btn primary" id="title-continue" onclick="titleContinue()">▶ はじめる</button>
+    <button class="title-btn" id="title-newgame" onclick="titleNewGame()" style="display:none;">🔄 最初から</button>
+    <button class="title-btn" onclick="showHelp(false)">📖 遊び方</button>
+    <button class="title-btn" id="title-mute" onclick="toggleMute()">🔊 サウンド</button>
+  </div>
+  <div class="title-version">v1.42</div>
 </div>
 
 <div class="overlay" id="overlay">
@@ -2817,6 +2903,8 @@ function toggleMute() {
   audioMuted = !audioMuted;
   const btn = document.getElementById('muteBtn');
   if (btn) btn.textContent = audioMuted ? '🔇' : '🔊';
+  const tbtn = document.getElementById('title-mute');
+  if (tbtn) tbtn.textContent = audioMuted ? '🔇 サウンド' : '🔊 サウンド';
 }
 
 // ===== 詰み自動シャッフル =====
@@ -3113,6 +3201,8 @@ function findHintMove() {
 function showHint() {
   if (busy) return;
   if (overlayEl.classList.contains('show')) return;
+  if (titleScreenEl && titleScreenEl.classList.contains('show')) return;
+  if (!grid || grid.length === 0 || !grid[0]) return;
   const move = findHintMove();
   if (!move) return;
   for (const p of move) {
@@ -3223,7 +3313,46 @@ function closeHelpAndShowInstall() {
 // 初回訪問時のみ自動表示（2.5秒後）
 setTimeout(() => { showInstallBanner(false); }, 2500);
 
-startStage();
+// ===== タイトル画面 =====
+const titleScreenEl = document.getElementById('title-screen');
+
+function showTitle() {
+  const cont = document.getElementById('title-continue');
+  const ng = document.getElementById('title-newgame');
+  if (stage > 1) {
+    cont.textContent = `▶ 続きから（ステージ${stage}）`;
+    ng.style.display = '';
+  } else {
+    cont.textContent = '▶ はじめる';
+    ng.style.display = 'none';
+  }
+  titleScreenEl.classList.add('show');
+}
+
+function _startAudioContext() {
+  ensureAudio();
+  if (audioCtx && audioCtx.state === 'suspended') {
+    try { audioCtx.resume(); } catch (_) {}
+  }
+}
+
+function titleContinue() {
+  _startAudioContext();
+  titleScreenEl.classList.remove('show');
+  startStage();
+}
+
+function titleNewGame() {
+  if (stage > 1 && !confirm(`本当に最初から始めますか？\nステージ${stage}までの進行が消えます。`)) return;
+  _startAudioContext();
+  stage = 1;
+  clearSavedStage();
+  titleScreenEl.classList.remove('show');
+  startStage();
+}
+
+// 起動時はタイトル画面を表示（盤面はメニュー選択後に構築）
+showTitle();
 </script>
 </body>
 </html>
