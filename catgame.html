@@ -980,7 +980,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<div class="version-badge">v1.43</div>
+<div class="version-badge">v1.44</div>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>
@@ -1018,7 +1018,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
     <button class="title-btn" onclick="showHelp(false)">📖 遊び方</button>
     <button class="title-btn" id="title-mute" onclick="toggleMute()">🔊 サウンド</button>
   </div>
-  <div class="title-version">v1.43</div>
+  <div class="title-version">v1.44</div>
 </div>
 
 <div class="overlay" id="overlay">
@@ -3163,8 +3163,9 @@ function swapTypesInPlace(r1, c1, r2, c2) {
 }
 
 function findHintMove() {
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
+  // 画面右下から左上へ向かって走査
+  for (let r = ROWS - 1; r >= 0; r--) {
+    for (let c = COLS - 1; c >= 0; c--) {
       const cell = grid[r][c];
       if (cell && cell.special === 'colorbomb' && !cell.jellyTrapped) {
         for (const [dr, dc] of [[1,0],[-1,0],[0,1],[0,-1]]) {
@@ -3175,21 +3176,22 @@ function findHintMove() {
       }
     }
   }
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
+  for (let r = ROWS - 1; r >= 0; r--) {
+    for (let c = COLS - 1; c >= 0; c--) {
       const cur = grid[r][c];
       if (!cur || cur.jellyTrapped) continue;
-      if (c + 1 < COLS && grid[r][c+1] && !grid[r][c+1].jellyTrapped) {
-        swapTypesInPlace(r, c, r, c+1);
+      // 右下スタートなので左・上の隣とスワップを試す
+      if (c - 1 >= 0 && grid[r][c-1] && !grid[r][c-1].jellyTrapped) {
+        swapTypesInPlace(r, c, r, c-1);
         const found = findMatchedCells().size > 0;
-        swapTypesInPlace(r, c, r, c+1);
-        if (found) return [{ r, c }, { r, c: c+1 }];
+        swapTypesInPlace(r, c, r, c-1);
+        if (found) return [{ r, c }, { r, c: c-1 }];
       }
-      if (r + 1 < ROWS && grid[r+1][c] && !grid[r+1][c].jellyTrapped) {
-        swapTypesInPlace(r, c, r+1, c);
+      if (r - 1 >= 0 && grid[r-1][c] && !grid[r-1][c].jellyTrapped) {
+        swapTypesInPlace(r, c, r-1, c);
         const found = findMatchedCells().size > 0;
-        swapTypesInPlace(r, c, r+1, c);
-        if (found) return [{ r, c }, { r: r+1, c }];
+        swapTypesInPlace(r, c, r-1, c);
+        if (found) return [{ r, c }, { r: r-1, c }];
       }
     }
   }
