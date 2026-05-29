@@ -465,6 +465,16 @@ h1 {
   font-size: 1.2em;
 }
 
+/* リセットボタン: busy中タップ時の「今は無理」フィードバック */
+button.shake { animation: btnShake 0.4s ease-in-out; }
+@keyframes btnShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px) rotate(-2deg); }
+  40% { transform: translateX(5px) rotate(2deg); }
+  60% { transform: translateX(-4px) rotate(-1deg); }
+  80% { transform: translateX(3px) rotate(1deg); }
+}
+
 /* ===== スペシャルキャンディ（本家参考デザイン）===== */
 
 /* ----- ストライプキャンディ（横/縦）太縞2本 ----- */
@@ -889,7 +899,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.39</span></h1>
+<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.40</span></h1>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>
@@ -904,7 +914,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 <div style="text-align:center; margin: 4px 0 2px;"><div id="clear-cond" style="font-size:1em; color:#222; font-weight:700; letter-spacing:0.02em; background:rgba(255,255,255,0.88); border-radius:10px; padding:5px 14px; display:inline-block; max-width:96%; box-shadow:0 1px 6px rgba(0,0,0,0.18);"></div></div>
 <div class="controls">
   <button class="primary" onclick="showHelp(false)">📖 遊び方</button>
-  <button onclick="restartGame()">🔄 最初から</button>
+  <button id="restartBtn" onclick="restartGame()">🔄 最初から</button>
   <button id="muteBtn" onclick="toggleMute()" title="サウンドon/off">🔊</button>
 </div>
 <div class="footer">
@@ -2335,7 +2345,18 @@ function startStage() {
 }
 
 function restartGame() {
-  if (stage > 1 && !confirm(`ステージ${stage}の進行を消してステージ1から始めますか？`)) return;
+  // 連鎖アニメ中はリセット不可（裏で動く非同期処理との競合を防ぐ）
+  if (busy) {
+    const btn = document.getElementById('restartBtn');
+    if (btn) {
+      btn.classList.remove('shake');
+      void btn.offsetWidth;
+      btn.classList.add('shake');
+      setTimeout(() => btn.classList.remove('shake'), 420);
+    }
+    return;
+  }
+  if (stage > 1 && !confirm(`本当に最初から始めますか？\nステージ${stage}までの進行が消えます。`)) return;
   if (overlayEl.classList.contains('show')) overlayEl.classList.remove('show');
   stage = 1;
   clearSavedStage();
