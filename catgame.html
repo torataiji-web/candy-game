@@ -999,7 +999,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<div class="version-badge">v1.46</div>
+<div class="version-badge">v1.47</div>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>
@@ -1037,7 +1037,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
     <button class="title-btn" onclick="showHelp(false)">📖 遊び方</button>
     <button class="title-btn" id="title-mute" onclick="toggleMute()">🔊 サウンド</button>
   </div>
-  <div class="title-version">v1.46</div>
+  <div class="title-version">v1.47</div>
 </div>
 
 <div class="overlay" id="overlay">
@@ -1863,8 +1863,8 @@ function comboName(type) {
     'stripe-wrapped':  '✨ すごいにゃー！',
     'wrap-wrap':       '🙀 メガにゃーん！！',
     'fish-bomb':       '🐟 にゃーんと大漁！',
-    'fish-stripe':     '🐟 一列にゃー！',
-    'fish-wrap':       '🐟 大爆発にゃ！',
+    'fish-stripe':     '🐟 ストライプ生成にゃ！',
+    'fish-wrap':       '🐟 ラッピング生成にゃ！',
     'fish-fish':       '🐟🐟 大群にゃ！！',
   })[type] || '💥 COMBO!';
 }
@@ -1993,25 +1993,39 @@ async function applySpecialCombo(combo, ca, cb, a, b) {
       }
       break;
     }
-    case 'fish-stripe': {
-      // 魚がストライプに変化して行/列を一気に消去
-      const fishCell = ca.special === 'fish' ? ca : cb;
-      fishCell.special = Math.random() < 0.5 ? 'stripeRow' : 'stripeCol';
-      updateCandyVisual(fishCell);
-      await sleep(300);
+    case 'fish-stripe':
+    case 'fish-wrap': {
+      // 魚が3匹泳いで、着地マスを特殊もるちゃんに変える（その場では爆発しない）
+      const isWrap = combo.type === 'fish-wrap';
+      ca.special = 'none'; cb.special = 'none';
       toRemove.add(`${a.r},${a.c}`);
       toRemove.add(`${b.r},${b.c}`);
-      break;
-    }
-    case 'fish-wrap': {
-      // 魚が5×5の広範囲爆発
-      ca.special = 'none'; cb.special = 'none';
-      for (let dr = -2; dr <= 2; dr++) for (let dc = -2; dc <= 2; dc++) {
-        const rr = tr + dr, cc = tc + dc;
-        if (rr < 0 || rr >= ROWS || cc < 0 || cc >= COLS) continue;
-        if (grid[rr][cc] && !grid[rr][cc].ingredient) toRemove.add(`${rr},${cc}`);
+      // 着地先候補（自由な通常猫のみ。スワップ元は除外）
+      const cand = [];
+      for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+        const x = grid[r][c];
+        if (x && x.type >= 0 && x.special === 'none' && !x.ingredient && !x.jellyTrapped
+            && !(r === tr && c === tc) && !(r === a.r && c === a.c)) {
+          cand.push({ r, c });
+        }
       }
-      toRemove.add(`${a.r},${a.c}`);
+      for (let i = cand.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [cand[i], cand[j]] = [cand[j], cand[i]];
+      }
+      const picks = cand.slice(0, 3);
+      picks.forEach((p, i) => {
+        setTimeout(() => { spawnFishFlight(tr, tc, p.r, p.c); playFishSound(); }, i * 220);
+      });
+      await sleep(300 + picks.length * 220);
+      // 着地マスを特殊化（toRemoveには入れない＝爆発させず盤面に残す）
+      for (const p of picks) {
+        const cell = grid[p.r][p.c];
+        if (cell && cell.type >= 0 && !cell.ingredient && !cell.jellyTrapped) {
+          cell.special = isWrap ? 'wrapped' : (Math.random() < 0.5 ? 'stripeRow' : 'stripeCol');
+          updateCandyVisual(cell);
+        }
+      }
       break;
     }
     case 'fish-fish': {
@@ -2369,8 +2383,8 @@ function showHelp(isFirstTime) {
       <p>・<span class="candy demo sm s-colorbomb">★</span>×<span class="candy demo sm c4 s-wrapped">😻</span> → 🙀 ばくはつにゃ！（同色を全部ラップドに変えて連続爆発）</p>
       <p>・<span class="candy demo sm s-colorbomb">★</span>×<span class="candy demo sm s-colorbomb">★</span> → 🐱 ぜんぶにゃー！！（盤面全消し！）</p>
       <p>・<span class="candy demo sm s-fish">🐟</span>×<span class="candy demo sm s-colorbomb">★</span> → 🐟 にゃ色全員魚！（同色が全部フィッシュに変化して一斉攻撃）</p>
-      <p>・<span class="candy demo sm s-fish">🐟</span>×<span class="candy demo sm c2 s-stripeRow">😹</span> → 🐟 一列にゃー！（フィッシュがストライプに変化して発射）</p>
-      <p>・<span class="candy demo sm s-fish">🐟</span>×<span class="candy demo sm c4 s-wrapped">😻</span> → 🐟 大爆発にゃ！（5×5の広範囲爆発）</p>
+      <p>・<span class="candy demo sm s-fish">🐟</span>×<span class="candy demo sm c2 s-stripeRow">😹</span> → 🐟 ストライプ生成にゃ！（魚が3匹泳いで着地点を<b>ストライプ</b>に変える。爆発はしないので後で使えるにゃ）</p>
+      <p>・<span class="candy demo sm s-fish">🐟</span>×<span class="candy demo sm c4 s-wrapped">😻</span> → 🐟 ラッピング生成にゃ！（魚が3匹泳いで着地点を<b>ラッピング</b>に変える。爆発はしないにゃ）</p>
       <p>・<span class="candy demo sm s-fish">🐟</span>×<span class="candy demo sm s-fish">🐟</span> → 🐟🐟 大群にゃ！！（6匹が一斉に障害物を攻撃）</p>
 
       <hr>
