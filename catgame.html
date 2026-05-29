@@ -889,7 +889,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.37</span></h1>
+<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.38</span></h1>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>
@@ -1075,7 +1075,8 @@ function swapCells(a, b) {
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 function canMatch(cell) {
-  return cell && cell.type >= 0 && !cell.marmalade && !cell.jellyTrapped;
+  // ゼリーで閉じ込められた猫もマッチ判定には参加する（殻だけがダメージを受ける）
+  return cell && cell.type >= 0 && !cell.marmalade;
 }
 
 function findMatchedCells() {
@@ -1199,18 +1200,25 @@ function analyzeGroup(group) {
 }
 
 function pickAnchor(group, swapOrigins) {
+  // ゼリーで固定された猫は特殊化できないのでアンカー候補から除外
   for (const sp of swapOrigins || []) {
-    if (group.cells.has(`${sp.r},${sp.c}`)) return { r: sp.r, c: sp.c };
+    if (group.cells.has(`${sp.r},${sp.c}`)) {
+      const cell = grid[sp.r] && grid[sp.r][sp.c];
+      if (cell && !cell.jellyTrapped) return { r: sp.r, c: sp.c };
+    }
   }
   let bestKey = null, bestScore = -1;
   for (const k of group.cells) {
     const [r, c] = k.split(',').map(Number);
+    const cell = grid[r] && grid[r][c];
+    if (!cell || cell.jellyTrapped) continue;
     let s = 0;
     for (const [dr, dc] of [[1,0],[-1,0],[0,1],[0,-1]]) {
       if (group.cells.has(`${r+dr},${c+dc}`)) s++;
     }
     if (s > bestScore) { bestScore = s; bestKey = k; }
   }
+  if (!bestKey) return null;
   const [r, c] = bestKey.split(',').map(Number);
   return { r, c };
 }
@@ -1302,7 +1310,7 @@ async function processRemoval(toRemove, comboLevel, newSpecials) {
     breakAdjacentMarmalade(toRemove);
   }
 
-  // ゼリー被弾を分離: 特殊効果がゼリー上を通過した場合、その猫は消えずゼリーがダメージ
+  // ゼリー被弾を分離: マッチ/特殊効果がゼリー上を通過した場合、その猫は消えずゼリーがダメージ
   const jellyHits = new Set();
   const clearSet = new Set();
   for (const k of toRemove) {
@@ -1311,25 +1319,6 @@ async function processRemoval(toRemove, comboLevel, newSpecials) {
       jellyHits.add(k);
     } else {
       clearSet.add(k);
-    }
-  }
-  // 同色隣接マッチによるゼリー破壊判定
-  if (mission && mission.type === 'jelly') {
-    for (const k of clearSet) {
-      const [r, c] = k.split(',').map(Number);
-      const cell = grid[r][c];
-      if (!cell || cell.type < 0) continue;
-      const myColor = cell.type;
-      for (const [dr, dc] of [[1,0],[-1,0],[0,1],[0,-1]]) {
-        const nr = r + dr, nc = c + dc;
-        if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
-        if (jellyGrid[nr] && jellyGrid[nr][nc] > 0) {
-          const trapped = grid[nr][nc];
-          if (trapped && trapped.type === myColor) {
-            jellyHits.add(`${nr},${nc}`);
-          }
-        }
-      }
     }
   }
 
@@ -1344,12 +1333,13 @@ async function processRemoval(toRemove, comboLevel, newSpecials) {
       // fish音はexpandWithSpecialsで発火時に既に再生済みのため除外
     }
   }
+  const effectCount = clearSet.size + jellyHits.size;
   if (hasBomb) playColorBombSound();
   else if (hasWrapped) playExplosion();
   else if (hasStripe) playStripeSound();
-  else playMatchSounds(clearSet.size);
+  else playMatchSounds(effectCount);
 
-  const gained = clearSet.size * 30 * comboLevel + newSpecials.length * 60;
+  const gained = effectCount * 30 * comboLevel + newSpecials.length * 60;
   stageScore += gained;
   scoreEl.textContent = stageScore;
 
@@ -1457,8 +1447,10 @@ async function cascade(swapOrigins) {
       const specialType = analyzeGroup(g);
       if (specialType !== 'none') {
         const anchor = pickAnchor(g, originsForThisStep);
-        newSpecials.push({ r: anchor.r, c: anchor.c, type: g.type, special: specialType });
-        protectedSet.add(`${anchor.r},${anchor.c}`);
+        if (anchor) {
+          newSpecials.push({ r: anchor.r, c: anchor.c, type: g.type, special: specialType });
+          protectedSet.add(`${anchor.r},${anchor.c}`);
+        }
       }
     }
 
@@ -2227,7 +2219,7 @@ function showHelp(isFirstTime) {
       <div class="section-title">🎯 ミッション（ステージごとに変化）</div>
       <p>4種類のクリア条件が <b>ステージごとに循環</b> します:</p>
       <p>・<b>🎯 スコア</b>: 指定ポイントを稼ぐにゃ</p>
-      <p>・<b>🟦 ゼリー消去</b>: ゼリーの中の猫は<b>動かせない</b>。<b>ゼリーの隣で、中の猫と同じ色のマッチ</b>を起こすか、<b>特殊もるちゃんの効果</b>で殻を割って解放するにゃ。濃い青は2回当てないと消えない。盤面の全ゼリーを破壊すればクリア！</p>
+      <p>・<b>🟦 ゼリー消去</b>: ゼリーの中の猫は<b>動かせないけど、同じ色のマッチには参加する</b>にゃ！中の猫を含む3個以上の同色マッチで殻が1段ダメージ。<b>特殊もるちゃんの効果</b>でも殻が割れる。濃い青は2回当てないと消えない。盤面の全ゼリーを破壊すればクリア！</p>
       <p>・<b>🎀 材料</b>: 🎀🥛を最下段まで落として収集する（特殊もるちゃんの爆発でも消えないにゃ）</p>
       <p>・<b>🎨 注文</b>: 指定された色の猫を指定匹数消すにゃ</p>
       <p>どのミッションも <b>残り手数</b> 以内に達成すれば次のステージへ。失敗なら <b>コンティニュー（+5手）</b> または ゲームオーバーにゃ。</p>
