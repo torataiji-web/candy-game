@@ -94,10 +94,13 @@ body {
 
 .version-badge {
   position: fixed;
-  right: 6px;
-  bottom: 3px;
-  font-size: 0.62em;
-  color: rgba(255,255,255,0.4);
+  right: 8px;
+  bottom: 16px;
+  font-size: 0.82em;
+  color: rgba(255,255,255,0.9);
+  background: rgba(0,0,0,0.45);
+  padding: 3px 9px;
+  border-radius: 9px;
   z-index: 50;
   pointer-events: none;
   letter-spacing: 0.5px;
@@ -999,7 +1002,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<div class="version-badge">v1.47</div>
+<div class="version-badge">v1.48</div>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>
@@ -1037,7 +1040,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
     <button class="title-btn" onclick="showHelp(false)">📖 遊び方</button>
     <button class="title-btn" id="title-mute" onclick="toggleMute()">🔊 サウンド</button>
   </div>
-  <div class="title-version">v1.47</div>
+  <div class="title-version">v1.48</div>
 </div>
 
 <div class="overlay" id="overlay">
