@@ -1017,7 +1017,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
   <button id="restartBtn" onclick="restartGame()">🔄 最初から</button>
   <button id="muteBtn" onclick="toggleMute()" title="サウンドon/off">🔊</button>
 </div>
-<div class="version-badge">v1.51</div>
+<div class="version-badge">v1.52</div>
 <div class="footer">
   💡 猫を<b>ドラッグ</b>して入れ替え（クリック→隣をクリックでも可）／無操作が続くとヒント点滅にゃ
 </div>
@@ -1038,7 +1038,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
     <button class="title-btn" onclick="showHelp(false)">📖 遊び方</button>
     <button class="title-btn" id="title-mute" onclick="toggleMute()">🔊 サウンド</button>
   </div>
-  <div class="title-version">v1.51</div>
+  <div class="title-version">v1.52</div>
 </div>
 
 <div class="overlay" id="overlay">
@@ -2308,6 +2308,25 @@ function showOverlay(title, detailHTML, btnText, onBtn) {
   overlayEl.classList.add('show');
 }
 
+// コンティニュー時の救済: ランダムな通常猫を1匹ストライプ化（膠着打破）
+function placeRescueStripe() {
+  const cells = [];
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    const x = grid[r][c];
+    if (x && x.type >= 0 && x.special === 'none' && !x.ingredient
+        && !x.obstacle && !x.marmalade && !x.jellyTrapped) {
+      cells.push(x);
+    }
+  }
+  if (cells.length === 0) return;
+  const cell = cells[Math.floor(Math.random() * cells.length)];
+  cell.special = Math.random() < 0.5 ? 'stripeRow' : 'stripeCol';
+  updateCandyVisual(cell);
+  cell.el.classList.add('shuffling');
+  setTimeout(() => cell.el.classList.remove('shuffling'), 600);
+  playSwap();
+}
+
 function showGameOverOverlay() {
   cancelIdleAndHint();
   overlayTitle.textContent = '💔 ゲームオーバー';
@@ -2319,6 +2338,7 @@ function showGameOverOverlay() {
     overlayEl.classList.remove('show');
     movesLimit += 5;
     updateHUD();
+    placeRescueStripe();  // 膠着打破にストライプを1つ配置
     busy = false;
     startIdleTimer();
   };
@@ -2360,7 +2380,7 @@ function showHelp(isFirstTime) {
       <p>・<b>🟦 ゼリー消去</b>: ゼリーの中の猫は<b>動かせないけど、同じ色のマッチには参加する</b>にゃ！中の猫を含む3個以上の同色マッチで殻が1段ダメージ。<b>特殊もるちゃんの効果</b>でも殻が割れる。濃い青は2回当てないと消えない。盤面の全ゼリーを破壊すればクリア！</p>
       <p>・<b>🎀 材料</b>: 🎀🥛を最下段まで落として収集する（特殊もるちゃんの爆発でも消えないにゃ）</p>
       <p>・<b>🎨 注文</b>: 指定された色の猫を指定匹数消すにゃ</p>
-      <p>どのミッションも <b>残り手数</b> 以内に達成すれば次のステージへ。失敗なら <b>コンティニュー（+5手）</b> または ゲームオーバーにゃ。</p>
+      <p>どのミッションも <b>残り手数</b> 以内に達成すれば次のステージへ。失敗なら <b>コンティニュー（+5手）</b> または ゲームオーバーにゃ。コンティニューすると<b>ストライプもるちゃんが1つ</b>もらえて立て直しやすいにゃ！</p>
 
       <hr>
       <div class="section-title">✨ 特殊もるちゃんの作り方</div>
