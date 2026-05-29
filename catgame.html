@@ -740,6 +740,55 @@ button.primary {
 }
 button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 
+.install-banner {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%) translateY(160%);
+  width: 92%;
+  max-width: 440px;
+  background: linear-gradient(135deg, #ff6ec7, #9d4edd);
+  color: #fff;
+  border-radius: 16px;
+  padding: 14px 36px 14px 18px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+  z-index: 200;
+  transition: transform 0.45s cubic-bezier(.2,.8,.2,1);
+  border: 2px solid rgba(255,255,255,0.4);
+  font-size: 0.92em;
+  line-height: 1.55;
+  text-align: left;
+}
+.install-banner.show { transform: translateX(-50%) translateY(0); }
+.install-banner .install-title { font-weight: 800; margin-bottom: 4px; font-size: 1.02em; }
+.install-banner b { color: #ffe066; }
+.install-banner .install-close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.35);
+  color: #fff;
+  font-size: 0.95em;
+  cursor: pointer;
+  padding: 2px 8px;
+  line-height: 1;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+}
+.install-banner .install-action {
+  background: #fff;
+  color: #9d4edd;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 0.95em;
+  cursor: pointer;
+  margin-top: 8px;
+  display: inline-block;
+}
 .footer {
   margin-top: 12px;
   font-size: 0.78em;
@@ -840,7 +889,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.32</span></h1>
+<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.33</span></h1>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>
@@ -860,6 +909,13 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </div>
 <div class="footer">
   💡 猫を<b>ドラッグ</b>して入れ替え（クリック→隣をクリックでも可）／無操作が続くとヒント点滅にゃ
+</div>
+
+<div class="install-banner" id="install-banner">
+  <button class="install-close" onclick="dismissInstallBanner(true)" aria-label="閉じる">✕</button>
+  <div class="install-title" id="install-title">📲 アプリにして遊ぶ</div>
+  <div id="install-body"></div>
+  <button class="install-action" id="install-action" style="display:none;" onclick="triggerInstallPrompt()">ホーム画面に追加</button>
 </div>
 
 <div class="overlay" id="overlay">
@@ -2152,6 +2208,11 @@ function showHelp(isFirstTime) {
   overlayTitle.textContent = '🐱 遊び方';
   overlayDetail.innerHTML = `
     <div class="help-content">
+      <div class="section-title">📲 アプリにする</div>
+      <p>ホーム画面に追加すると<b>全画面でアプリのように</b>サクサク遊べるにゃ！</p>
+      <p><button onclick="closeHelpAndShowInstall()" style="background:linear-gradient(135deg,#ff6ec7,#9d4edd);color:#fff;border:1.5px solid rgba(255,255,255,0.4);padding:7px 16px;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.92em;">📲 アプリにする手順を見る</button></p>
+
+      <hr>
       <div class="section-title">🎮 基本操作（2通り）</div>
       <div class="step"><div class="step-num">A</div><div><b>ドラッグ/スワイプ</b>：猫を動かしたい方向（上下左右）に少しドラッグすると、隣の猫と入れ替わります</div></div>
       <div class="step"><div class="step-num">B</div><div><b>クリックでも可</b>：1匹目をクリック→隣をクリックで入れ替え</div></div>
@@ -3059,6 +3120,77 @@ window.addEventListener('resize', () => {
     j.style.top = posY(r) + 'px';
   });
 });
+
+// ===== PWAインストールバナー =====
+let deferredInstallPrompt = null;
+const _isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                      window.navigator.standalone === true;
+const _isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+const _isAndroid = /Android/.test(navigator.userAgent);
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+});
+window.addEventListener('appinstalled', () => {
+  dismissInstallBanner(true);
+});
+
+function showInstallBanner(force) {
+  if (_isStandalone) return;
+  if (!force) {
+    try {
+      if (localStorage.getItem('molchan_install_dismissed') === '1') return;
+    } catch(e) {}
+  }
+  const banner = document.getElementById('install-banner');
+  const titleEl = document.getElementById('install-title');
+  const body = document.getElementById('install-body');
+  const action = document.getElementById('install-action');
+  if (_isIOS) {
+    titleEl.textContent = '📲 アプリにして遊ぶ（iPhone）';
+    body.innerHTML = '画面下の <b>共有ボタン</b>（□↑）をタップ →<br>「<b>ホーム画面に追加</b>」を選ぶにゃ！';
+    action.style.display = 'none';
+  } else if (deferredInstallPrompt) {
+    titleEl.textContent = '📲 アプリにして遊ぶ';
+    body.innerHTML = 'ホーム画面に追加すると<b>全画面でサクサク</b>遊べるにゃ！';
+    action.style.display = '';
+  } else if (_isAndroid) {
+    titleEl.textContent = '📲 アプリにして遊ぶ（Android）';
+    body.innerHTML = 'ブラウザのメニュー（︙）から「<b>ホーム画面に追加</b>」または「<b>アプリをインストール</b>」を選ぶにゃ！';
+    action.style.display = 'none';
+  } else {
+    titleEl.textContent = '📲 アプリにして遊ぶ';
+    body.innerHTML = 'ブラウザのメニューから「<b>ホーム画面に追加</b>」を選ぶにゃ！';
+    action.style.display = 'none';
+  }
+  banner.classList.add('show');
+}
+
+async function triggerInstallPrompt() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  const { outcome } = await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  if (outcome === 'accepted') dismissInstallBanner(true);
+}
+
+function dismissInstallBanner(forever) {
+  const banner = document.getElementById('install-banner');
+  if (banner) banner.classList.remove('show');
+  if (forever) {
+    try { localStorage.setItem('molchan_install_dismissed', '1'); } catch(e) {}
+  }
+}
+
+function closeHelpAndShowInstall() {
+  overlayEl.classList.remove('show');
+  startIdleTimer();
+  showInstallBanner(true);
+}
+
+// 初回訪問時のみ自動表示（2.5秒後）
+setTimeout(() => { showInstallBanner(false); }, 2500);
 
 startStage();
 </script>
