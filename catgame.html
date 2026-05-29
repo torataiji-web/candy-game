@@ -1017,7 +1017,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
   <button id="restartBtn" onclick="restartGame()">🔄 最初から</button>
   <button id="muteBtn" onclick="toggleMute()" title="サウンドon/off">🔊</button>
 </div>
-<div class="version-badge">v1.50</div>
+<div class="version-badge">v1.51</div>
 <div class="footer">
   💡 猫を<b>ドラッグ</b>して入れ替え（クリック→隣をクリックでも可）／無操作が続くとヒント点滅にゃ
 </div>
@@ -1038,7 +1038,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
     <button class="title-btn" onclick="showHelp(false)">📖 遊び方</button>
     <button class="title-btn" id="title-mute" onclick="toggleMute()">🔊 サウンド</button>
   </div>
-  <div class="title-version">v1.50</div>
+  <div class="title-version">v1.51</div>
 </div>
 
 <div class="overlay" id="overlay">
@@ -2087,8 +2087,8 @@ async function trySwap(a, b) {
   swapCells(a, b);
   await sleep(280);
 
-  // 材料スワップは無条件成立、通常スワップはマッチが必要
-  if (!ingredientSwap && findMatchedCells().size === 0) {
+  // 材料スワップも通常スワップと同様、マッチが成立しなければ無効（元に戻す）
+  if (findMatchedCells().size === 0) {
     swapCells(a, b);
     await sleep(280);
     busy = false;
