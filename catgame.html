@@ -64,7 +64,6 @@
   }
   html, body { min-height: 0; }
   body { padding: 0; justify-content: flex-start; }
-  h1 { font-size: 1em; margin: 0 0 2px; line-height: 1.1; padding: 0; }
   .board-wrap { padding: 4px; border-radius: 12px; }
   .hud { gap: 4px; margin-bottom: 3px; }
   .hud-item { padding: 3px 7px; font-size: 0.75em; border-radius: 9px; }
@@ -93,16 +92,15 @@ body {
   overflow-x: hidden;
 }
 
-h1 {
-  font-size: clamp(1.6em, 5vw, 2.4em);
-  margin: 0 0 12px;
-  font-weight: 700;
+.version-badge {
+  position: fixed;
+  right: 6px;
+  bottom: 3px;
+  font-size: 0.62em;
+  color: rgba(255,255,255,0.4);
+  z-index: 50;
+  pointer-events: none;
   letter-spacing: 0.5px;
-  background: linear-gradient(45deg, #fff 20%, #ffeebb 50%, #ffb8d8 80%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 4px 16px rgba(255,180,220,0.4));
 }
 
 .hud {
@@ -982,7 +980,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.42</span></h1>
+<div class="version-badge">v1.43</div>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>
@@ -1020,7 +1018,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
     <button class="title-btn" onclick="showHelp(false)">📖 遊び方</button>
     <button class="title-btn" id="title-mute" onclick="toggleMute()">🔊 サウンド</button>
   </div>
-  <div class="title-version">v1.42</div>
+  <div class="title-version">v1.43</div>
 </div>
 
 <div class="overlay" id="overlay">
