@@ -889,7 +889,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
 </style>
 </head>
 <body>
-<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.33</span></h1>
+<h1>🐱 MOL-CHAN GAME 🐱<span style="font-size:0.38em; font-weight:500; margin-left:8px; vertical-align:middle; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);">v1.34</span></h1>
 <div class="hud">
   <div class="hud-item">ステージ <span id="stage">1</span></div>
   <div class="hud-item target" id="mission">ミッション</div>
@@ -3148,8 +3148,8 @@ function showInstallBanner(force) {
   const body = document.getElementById('install-body');
   const action = document.getElementById('install-action');
   if (_isIOS) {
-    titleEl.textContent = '📲 アプリにして遊ぶ（iPhone）';
-    body.innerHTML = '画面下の <b>共有ボタン</b>（□↑）をタップ →<br>「<b>ホーム画面に追加</b>」を選ぶにゃ！';
+    titleEl.textContent = '📲 アプリにして遊ぶ';
+    body.innerHTML = 'ブラウザのメニューから「<b>ホーム画面に追加</b>」を選ぶにゃ！そのままでも遊べるけど便利にゃ！';
     action.style.display = 'none';
   } else if (deferredInstallPrompt) {
     titleEl.textContent = '📲 アプリにして遊ぶ';
