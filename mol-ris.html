@@ -188,7 +188,7 @@
 </head>
 <body>
 <div id="app">
-  <div id="ver">v1.03</div>
+  <div id="ver">v1.04</div>
   <button id="mute-btn">SOUND</button>
   <div id="game-wrap">
     <div id="canvas-wrap"><canvas id="game"></canvas></div>
@@ -353,25 +353,10 @@ function drawCandyCell(c, x, y, size, color, glow, cat, opts={}) {
   if (cat) {
     c.save();
     c.globalAlpha = ghost ? 0.55 : 1;
-    // 猫の背景に暗い円を敷いて顔をくっきり見せる
-    const bg = c.createRadialGradient(
-      x + size/2, y + size/2 + size*0.05, 0,
-      x + size/2, y + size/2 + size*0.05, size*0.42
-    );
-    bg.addColorStop(0, 'rgba(0,0,0,0.45)');
-    bg.addColorStop(0.7, 'rgba(0,0,0,0.18)');
-    bg.addColorStop(1, 'rgba(0,0,0,0)');
-    c.fillStyle = bg;
-    c.beginPath();
-    c.arc(x + size/2, y + size/2 + size*0.05, size*0.42, 0, Math.PI*2);
-    c.fill();
-    // 猫の顔（少し大きく）
-    c.font = `${Math.floor(size*0.78)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+    c.font = `${Math.floor(size*0.80)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji","Twemoji Mozilla",sans-serif`;
     c.textAlign = 'center';
     c.textBaseline = 'middle';
-    c.shadowColor = 'rgba(0,0,0,0.55)';
-    c.shadowBlur = Math.max(2, size*0.10);
-    c.shadowOffsetY = 1;
+    c.fillStyle = '#fff'; // モノクロ絵文字フォールバック時の塗り
     c.fillText(cat, x + size/2, y + size/2 + size*0.05);
     c.restore();
   }
