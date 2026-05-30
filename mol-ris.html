@@ -100,14 +100,43 @@
 
   #hi-name { font-size: 11px; opacity: 0.85; text-align: right; margin-top: 2px; color: #ffe066; font-weight: 700; }
 
-  #hint {
+  #pad {
     display: none;
-    margin-top: 6px;
-    font-size: 10px;
-    line-height: 1.6;
-    color: #5a5a88;
-    text-align: center;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    max-width: 380px;
+    margin: 8px auto 0;
     padding: 0 8px;
+  }
+  .prow { display: flex; gap: 6px; justify-content: center; }
+  .pb {
+    flex: 1 1 0;
+    background: rgba(255,255,255,0.14);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1.5px solid rgba(255,255,255,0.3);
+    color: #fff;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    padding: 14px 0;
+    border-radius: 14px;
+    cursor: pointer;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    transition: transform 0.05s, background 0.05s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .pb:active { background: rgba(255,255,255,0.32); transform: scale(0.95); }
+  .pb.mid { flex: 0 0 50%; }
+  .pb.rot { color: #ff9dff; border-color: rgba(255,157,255,0.5); }
+  .pb.drop {
+    color: #ffe066;
+    background: rgba(255,224,102,0.18);
+    border-color: rgba(255,224,102,0.55);
+    font-size: 28px;
   }
 
   #mute-btn {
@@ -132,7 +161,7 @@
     .panel { flex: 1 1 0; min-width: 70px; padding: 4px 6px; }
     .panel .val { font-size: 13px; }
     .panel.next { order: -1; flex: 0 0 auto; min-height: 0; }
-    #hint { display: block; }
+    #pad { display: flex; }
   }
 </style>
 </head>
@@ -166,9 +195,19 @@
       </div>
     </div>
   </div>
-  <div id="hint">
-    Swipe ◀▶ Move ・ Swipe ▼ Soft Drop ・ Flick ▼ Hard Drop<br>
-    Tap = Rotate ⟳ ・ 2-Finger Tap = Rotate ⟲
+  <div id="pad">
+    <div class="prow">
+      <button class="pb" id="p-left">◀</button>
+      <button class="pb rot" id="p-ccw">⟲</button>
+      <button class="pb rot" id="p-cw">⟳</button>
+      <button class="pb" id="p-right">▶</button>
+    </div>
+    <div class="prow">
+      <button class="pb mid" id="p-down">▼</button>
+    </div>
+    <div class="prow">
+      <button class="pb mid drop" id="p-drop">⤓</button>
+    </div>
   </div>
 </div>
 <script>
@@ -198,7 +237,7 @@ function fitCanvas() {
   let maxW, maxH;
   if (isMobile) {
     maxW = Math.min(window.innerWidth - 40, 480);
-    maxH = window.innerHeight - 260;
+    maxH = window.innerHeight - 400;
     CELL = Math.floor(Math.min(maxW / COLS, maxH / ROWS));
   } else {
     maxW = window.innerWidth - 220;
@@ -335,6 +374,8 @@ class TetrisGame {
       this.score = 0;
       this.linesCleared = 0;
       this.level = 1;
+      this.combo = 0;
+      this.comboMessage = null;
     }
     this.fallSpeed = Math.max(100, 550 - this.level * 40);
     this.bag = this.newBag();
@@ -447,11 +488,27 @@ class TetrisGame {
       if (full) lines.push(y);
     }
     if (lines.length) {
+      this.combo = (this.combo || 0) + 1;
+      if (lines.length === 4) {
+        // TETRIS! (I棒で4ライン同時消し)
+        this.showComboMessage('すごいにゃ！！！！', true);
+        this.score += 400 * this.level; // テトリスボーナス
+        this.updateSidePanel();
+      } else if (this.combo >= 2) {
+        this.showComboMessage(`${this.combo}連にゃ！`);
+        this.score += this.combo * 50 * this.level;
+        this.updateSidePanel();
+      }
       this.state = 'ANIMATING';
       this.animClear(lines, 0);
     } else {
+      this.combo = 0;
       this.spawnNew();
     }
+  }
+
+  showComboMessage(text, special=false) {
+    this.comboMessage = { text, life: special ? 110 : 70, max: special ? 110 : 70, special };
   }
 
   animClear(lines, step) {
@@ -628,6 +685,54 @@ class TetrisGame {
           }
         }
       }
+    }
+
+    // combo message (連鎖 N連にゃ / すごいにゃ)
+    if (this.comboMessage) {
+      const m = this.comboMessage;
+      const t = m.life / m.max; // 1→0
+      const fadeIn = Math.min(1, (m.max - m.life) / 8);
+      const alpha = Math.min(fadeIn, Math.min(1, t * 2));
+      const baseScale = m.special ? 1.0 : 0.8;
+      const growScale = m.special ? 0.9 : 0.6;
+      const scale = baseScale + (1 - t) * growScale;
+      const yOff = (1 - t) * (m.special ? -50 : -30);
+      // テトリス時の小刻みなブレ
+      const shakeX = m.special ? Math.sin(m.life * 0.9) * 3 : 0;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(W/2 + shakeX, H/2 + yOff);
+      ctx.scale(scale, scale);
+      const fontSize = m.special ? 44 : 38;
+      ctx.font = `700 ${fontSize}px Fredoka, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      // 影
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.fillText(m.text, 3, 3);
+      // 本体
+      let grad;
+      if (m.special) {
+        // 虹色グラデ
+        grad = ctx.createLinearGradient(-100, -20, 100, 20);
+        grad.addColorStop(0.0, '#ff6ec7');
+        grad.addColorStop(0.25, '#ffd56e');
+        grad.addColorStop(0.5, '#7df3ff');
+        grad.addColorStop(0.75, '#9affb8');
+        grad.addColorStop(1.0, '#cc9aff');
+      } else {
+        grad = ctx.createLinearGradient(0, -20, 0, 20);
+        grad.addColorStop(0, '#fff5a3');
+        grad.addColorStop(1, '#ff6ec7');
+      }
+      ctx.fillStyle = grad;
+      ctx.fillText(m.text, 0, 0);
+      ctx.lineWidth = m.special ? 3 : 2;
+      ctx.strokeStyle = '#fff';
+      ctx.strokeText(m.text, 0, 0);
+      ctx.restore();
+      m.life--;
+      if (m.life <= 0) this.comboMessage = null;
     }
 
     // overlay
@@ -947,6 +1052,45 @@ canvas.addEventListener('mousemove', e => {
 
 // ミュート(将来BGM追加用に残置、非表示)
 document.getElementById('mute-btn').style.display = 'none';
+
+// ===== タッチパッドボタン =====
+function bindHoldBtn(id, fn, repeatMs) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  let to = null, iv = null;
+  const start = e => {
+    e.preventDefault();
+    e.stopPropagation();
+    fn();
+    if (repeatMs) {
+      to = setTimeout(() => { iv = setInterval(fn, repeatMs); }, 180);
+    }
+  };
+  const end = e => {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    if (to) { clearTimeout(to); to = null; }
+    if (iv) { clearInterval(iv); iv = null; }
+  };
+  el.addEventListener('touchstart', start, {passive:false});
+  el.addEventListener('touchend', end, {passive:false});
+  el.addEventListener('touchcancel', end, {passive:false});
+  el.addEventListener('mousedown', start);
+  el.addEventListener('mouseup', end);
+  el.addEventListener('mouseleave', end);
+}
+function bindTapBtn(id, fn) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const handler = e => { e.preventDefault(); e.stopPropagation(); fn(); };
+  el.addEventListener('touchstart', handler, {passive:false});
+  el.addEventListener('click', handler);
+}
+bindHoldBtn('p-left',  () => game.move(-1, 0), 90);
+bindHoldBtn('p-right', () => game.move(1, 0),  90);
+bindHoldBtn('p-down',  () => game.move(0, 1),  50);
+bindTapBtn('p-ccw', () => game.rotateCCW());
+bindTapBtn('p-cw',  () => game.rotate());
+bindTapBtn('p-drop', () => game.hardDrop());
 
 // ダブルタップ拡大防止
 let lastTouch = 0;
