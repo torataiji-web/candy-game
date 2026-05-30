@@ -698,6 +698,18 @@ button.shake { animation: btnShake 0.4s ease-in-out; }
 }
 .combo-display.show { animation: comboShow 1.1s ease-out forwards; }
 .combo-display.show-long { animation: comboShowLong 2.8s ease-out forwards; }
+/* 連鎖数字: ポップして表示を保持（連鎖終了までフェードしない） */
+.combo-display.show-hold { animation: comboPop 0.32s ease-out forwards; }
+.combo-display.fade-out { animation: comboFade 0.5s ease-out forwards; }
+@keyframes comboPop {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.3) rotate(-20deg); }
+  60%  { opacity: 1; transform: translate(-50%, -50%) scale(1.4) rotate(8deg); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1.1) rotate(0deg); }
+}
+@keyframes comboFade {
+  0%   { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
+}
 @keyframes comboShow {
   0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3) rotate(-20deg); }
   20% { opacity: 1; transform: translate(-50%, -50%) scale(1.4) rotate(8deg); }
@@ -1017,7 +1029,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
   <button id="restartBtn" onclick="restartGame()">🔄 最初から</button>
   <button id="muteBtn" onclick="toggleMute()" title="サウンドon/off">🔊</button>
 </div>
-<div class="version-badge">v1.52</div>
+<div class="version-badge">v1.53</div>
 <div class="footer">
   💡 猫を<b>ドラッグ</b>して入れ替え（クリック→隣をクリックでも可）／無操作が続くとヒント点滅にゃ
 </div>
@@ -1038,7 +1050,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
     <button class="title-btn" onclick="showHelp(false)">📖 遊び方</button>
     <button class="title-btn" id="title-mute" onclick="toggleMute()">🔊 サウンド</button>
   </div>
-  <div class="title-version">v1.52</div>
+  <div class="title-version">v1.53</div>
 </div>
 
 <div class="overlay" id="overlay">
@@ -1585,6 +1597,7 @@ async function cascade(swapOrigins) {
 
     originsForThisStep = [];
   }
+  hideCombo(); // 連鎖が終わったら数字をフェードアウト
 }
 
 function applyGravity() {
@@ -1668,9 +1681,11 @@ function spawnScorePopup(x, y, text) {
 
 function showCombo(combo, long = false) {
   let text;
+  let hold = false;
   if (typeof combo === 'string') {
     text = combo;
   } else {
+    hold = true; // 連鎖数字は終了までフェードさせず保持
     if (combo >= 8) {
       text = `🐱 にゃ×${combo}！`;
     } else {
@@ -1680,11 +1695,19 @@ function showCombo(combo, long = false) {
     }
   }
   comboEl.textContent = text;
-  comboEl.classList.remove('show');
-  comboEl.classList.remove('show-long');
+  comboEl.classList.remove('show', 'show-long', 'show-hold', 'fade-out');
   void comboEl.offsetWidth;
-  comboEl.classList.add(long ? 'show-long' : 'show');
+  if (hold) comboEl.classList.add('show-hold');
+  else comboEl.classList.add(long ? 'show-long' : 'show');
   if (typeof combo === 'number') playComboSound(combo);
+}
+
+// 連鎖終了時に保持中の連鎖数字をフェードアウト
+function hideCombo() {
+  if (!comboEl.classList.contains('show-hold')) return;
+  comboEl.classList.remove('show-hold');
+  void comboEl.offsetWidth;
+  comboEl.classList.add('fade-out');
 }
 
 // ===== ラップド爆弾の二重爆発（本家ルール） =====
