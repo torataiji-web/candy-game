@@ -1029,7 +1029,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
   <button id="restartBtn" onclick="restartGame()">🔄 最初から</button>
   <button id="muteBtn" onclick="toggleMute()" title="サウンドon/off">🔊</button>
 </div>
-<div class="version-badge">v1.54</div>
+<div class="version-badge">v1.55</div>
 <div class="footer">
   💡 猫を<b>ドラッグ</b>して入れ替え（クリック→隣をクリックでも可）／無操作が続くとヒント点滅にゃ
 </div>
@@ -1050,7 +1050,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
     <button class="title-btn" onclick="showHelp(false)">📖 遊び方</button>
     <button class="title-btn" id="title-mute" onclick="toggleMute()">🔊 サウンド</button>
   </div>
-  <div class="title-version">v1.54</div>
+  <div class="title-version">v1.55</div>
 </div>
 
 <div class="overlay" id="overlay">
@@ -2240,8 +2240,8 @@ async function stageClear() {
   const comboText = bestCombo >= 2 ? (COMBO_NAMES[Math.min(bestCombo,7)] || ('x' + bestCombo)) : 'x' + bestCombo;
   const stars = computeStars();
 
-  // ステージ40でエンディング
-  if (stage === 40) {
+  // ステージ20でエンディング
+  if (stage === 20) {
     showEndingOverlay(comboText);
     return;
   }
@@ -2266,7 +2266,7 @@ function showEndingOverlay(comboText) {
     '🟦 ゼリーが行く手を阻んだ',
     '🎀 でも 連鎖の力を信じて',
     '😻 もるちゃんたちは進み続けたにゃ',
-    '✨ そして 40の試練を超えた時',
+    '✨ そして 20の試練を超えた時',
     '🌟 もるちゃんは 伝説の猫になったにゃ！ 🌟',
     '🎉 おめでとうにゃ〜！！ 🎉',
     `<div style="margin-top:14px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.3);">最終スコア: <b style="color:#ffe066">${stageScore}</b><br>最高連鎖: <b style="color:#ffe066">${comboText}</b></div>`,
@@ -2278,7 +2278,7 @@ function showEndingOverlay(comboText) {
       `<div class="ending-line" style="animation-delay: ${i * 0.7}s">${l}</div>`
     ).join('');
   const btnDelay = lines.length * 0.7 + 0.3;
-  overlayBtn.textContent = '🐟 ステージ41以降も続けて遊ぶ';
+  overlayBtn.textContent = '🐟 ステージ21以降も続けて遊ぶ';
   overlayBtn.style.cssText = `opacity:0; animation: endingBtnFade 1s ease-out ${btnDelay}s forwards;`;
   overlayBtn.onclick = () => {
     overlayEl.classList.remove('show');
