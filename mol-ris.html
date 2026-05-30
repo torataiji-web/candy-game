@@ -101,7 +101,7 @@
   #hi-name { font-size: 11px; opacity: 0.85; text-align: right; margin-top: 2px; color: #ffe066; font-weight: 700; }
 
   #pad {
-    display: none;
+    display: flex;
     flex-direction: column;
     gap: 6px;
     width: 100%;
@@ -179,7 +179,7 @@
 </head>
 <body>
 <div id="app">
-  <div id="ver">v1.0</div>
+  <div id="ver">v1.01</div>
   <button id="mute-btn">SOUND</button>
   <div id="game-wrap">
     <div id="canvas-wrap"><canvas id="game"></canvas></div>
@@ -254,7 +254,7 @@ function fitCanvas() {
     CELL = Math.floor(Math.min(maxW / COLS, maxH / ROWS));
   } else {
     maxW = window.innerWidth - 220;
-    maxH = window.innerHeight - 50;
+    maxH = window.innerHeight - 220;
     CELL = Math.floor(Math.min(maxW / COLS, maxH / ROWS));
   }
   CELL = Math.max(12, Math.min(CELL, 36));
@@ -342,10 +342,26 @@ function drawCandyCell(c, x, y, size, color, glow, cat, opts={}) {
 
   if (cat) {
     c.save();
-    c.globalAlpha = ghost ? 0.5 : 1;
-    c.font = `${Math.floor(size*0.7)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+    c.globalAlpha = ghost ? 0.55 : 1;
+    // 猫の背景に暗い円を敷いて顔をくっきり見せる
+    const bg = c.createRadialGradient(
+      x + size/2, y + size/2 + size*0.05, 0,
+      x + size/2, y + size/2 + size*0.05, size*0.42
+    );
+    bg.addColorStop(0, 'rgba(0,0,0,0.45)');
+    bg.addColorStop(0.7, 'rgba(0,0,0,0.18)');
+    bg.addColorStop(1, 'rgba(0,0,0,0)');
+    c.fillStyle = bg;
+    c.beginPath();
+    c.arc(x + size/2, y + size/2 + size*0.05, size*0.42, 0, Math.PI*2);
+    c.fill();
+    // 猫の顔（少し大きく）
+    c.font = `${Math.floor(size*0.78)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
     c.textAlign = 'center';
     c.textBaseline = 'middle';
+    c.shadowColor = 'rgba(0,0,0,0.55)';
+    c.shadowBlur = Math.max(2, size*0.10);
+    c.shadowOffsetY = 1;
     c.fillText(cat, x + size/2, y + size/2 + size*0.05);
     c.restore();
   }
