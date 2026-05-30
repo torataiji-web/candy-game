@@ -139,6 +139,18 @@
     font-size: 28px;
   }
 
+  #ver {
+    position: fixed; top: 8px; right: 10px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.85);
+    background: rgba(0,0,0,0.4);
+    padding: 3px 9px;
+    border-radius: 9px;
+    pointer-events: none;
+    letter-spacing: 0.5px;
+    font-family: 'Fredoka', sans-serif;
+    z-index: 10;
+  }
   #mute-btn {
     position: fixed; top: 6px; right: 6px;
     background: transparent; border: 1px solid #333355;
@@ -167,6 +179,7 @@
 </head>
 <body>
 <div id="app">
+  <div id="ver">v1.0</div>
   <button id="mute-btn">SOUND</button>
   <div id="game-wrap">
     <div id="canvas-wrap"><canvas id="game"></canvas></div>
