@@ -188,7 +188,7 @@
 </head>
 <body>
 <div id="app">
-  <div id="ver">v1.04</div>
+  <div id="ver">v1.05</div>
   <button id="mute-btn">SOUND</button>
   <div id="game-wrap">
     <div id="canvas-wrap"><canvas id="game"></canvas></div>
@@ -220,14 +220,11 @@
   <div id="pad">
     <div class="prow">
       <button class="pb" id="p-left">◀</button>
-      <button class="pb rot" id="p-cw">⟳</button>
+      <button class="pb" id="p-down">▼</button>
       <button class="pb" id="p-right">▶</button>
     </div>
     <div class="prow">
-      <button class="pb mid" id="p-down">▼</button>
-    </div>
-    <div class="prow">
-      <button class="pb mid drop" id="p-drop">⤓</button>
+      <button class="pb mid rot" id="p-cw">⟳</button>
     </div>
   </div>
 </div>
@@ -260,11 +257,11 @@ function fitCanvas() {
     // iPhone 12 基準 (390x844): サイドパネル右・ボタン下のスペース確保
     // CELL=26で canvas 260x520 → サイド110+gap6+padding14、下にボタン約200+margin
     maxW = window.innerWidth - 150;
-    maxH = window.innerHeight - 240;
+    maxH = window.innerHeight - 190;
     CELL = Math.floor(Math.min(maxW / COLS, maxH / ROWS));
   } else {
     maxW = window.innerWidth - 220;
-    maxH = window.innerHeight - 220;
+    maxH = window.innerHeight - 170;
     CELL = Math.floor(Math.min(maxW / COLS, maxH / ROWS));
   }
   CELL = Math.max(12, Math.min(CELL, 36));
@@ -1113,7 +1110,6 @@ bindHoldBtn('p-left',  () => game.move(-1, 0), 90);
 bindHoldBtn('p-right', () => game.move(1, 0),  90);
 bindHoldBtn('p-down',  () => game.move(0, 1),  50);
 bindTapBtn('p-cw',  () => game.rotate());
-bindTapBtn('p-drop', () => game.hardDrop());
 
 // ダブルタップ拡大防止
 let lastTouch = 0;
