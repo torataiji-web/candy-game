@@ -1029,7 +1029,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
   <button id="restartBtn" onclick="restartGame()">🔄 最初から</button>
   <button id="muteBtn" onclick="toggleMute()" title="サウンドon/off">🔊</button>
 </div>
-<div class="version-badge">v1.53</div>
+<div class="version-badge">v1.54</div>
 <div class="footer">
   💡 猫を<b>ドラッグ</b>して入れ替え（クリック→隣をクリックでも可）／無操作が続くとヒント点滅にゃ
 </div>
@@ -1050,7 +1050,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
     <button class="title-btn" onclick="showHelp(false)">📖 遊び方</button>
     <button class="title-btn" id="title-mute" onclick="toggleMute()">🔊 サウンド</button>
   </div>
-  <div class="title-version">v1.53</div>
+  <div class="title-version">v1.54</div>
 </div>
 
 <div class="overlay" id="overlay">
@@ -1177,6 +1177,7 @@ function onCandyClick(el) {
   if (!selected) {
     selected = pos;
     el.classList.add('selected');
+    startIdleTimer();   // 選択だけで放置されてもヒントが出るよう再開
     return;
   }
 
@@ -1185,16 +1186,18 @@ function onCandyClick(el) {
 
   if (selected.r === pos.r && selected.c === pos.c) {
     selected = null;
+    startIdleTimer();
     return;
   }
 
   if (isAdjacent(selected, pos)) {
     const a = selected;
     selected = null;
-    trySwap(a, pos);
+    trySwap(a, pos);   // 成立時は trySwap 末尾でタイマー再開
   } else {
     selected = pos;
     el.classList.add('selected');
+    startIdleTimer();
   }
 }
 
@@ -3180,6 +3183,7 @@ function onBoardPointerUp(e) {
     const wasMoved = dragStart.moved;
     dragStart = null;
     if (!wasMoved) onCandyClick(dragEl);
+    startIdleTimer();   // 選択/微ドラッグで終わってもヒント再開
     return;
   }
 
@@ -3194,6 +3198,7 @@ function onBoardPointerUp(e) {
     snapBackVisually(dragEl);
     if (partnerCell) snapBackVisually(partnerCell.el);
     dragStart = null;
+    startIdleTimer();   // 盤外スワイプでもヒント再開
     return;
   }
 
@@ -3221,6 +3226,7 @@ function onBoardPointerCancel(e) {
   if (dragStart.partner) snapBackVisually(dragStart.partner.el);
   dragStart = null;
   try { boardEl.releasePointerCapture(e.pointerId); } catch (_) {}
+  startIdleTimer();   // ドラッグキャンセルでもヒント再開
 }
 
 boardEl.addEventListener('pointerdown', onBoardPointerDown);
