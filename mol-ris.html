@@ -3,6 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<script>
+// 自動キャッシュ回避: 1セッションに1回タイムスタンプ付きで再読込
+(function(){
+  try {
+    if (!sessionStorage.getItem('molris_cb')) {
+      sessionStorage.setItem('molris_cb', '1');
+      location.replace(location.pathname + '?t=' + Date.now() + location.hash);
+    }
+  } catch(e) {}
+})();
+</script>
 <title>MOL-RIS</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
 <style>
@@ -174,7 +188,7 @@
 </head>
 <body>
 <div id="app">
-  <div id="ver">v1.02</div>
+  <div id="ver">v1.03</div>
   <button id="mute-btn">SOUND</button>
   <div id="game-wrap">
     <div id="canvas-wrap"><canvas id="game"></canvas></div>
