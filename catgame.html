@@ -1009,6 +1009,8 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
   font-size: 1.9em;
   font-weight: 800;
   margin-bottom: 14px;
+  white-space: pre-line;   /* タイトル内の改行(\n)を反映 */
+  line-height: 1.25;
   background: linear-gradient(45deg, #fff, #ffeebb, #ffb8d8);
   -webkit-background-clip: text;
   background-clip: text;
@@ -1041,7 +1043,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
   <button id="restartBtn" onclick="restartGame()">🔄 最初から</button>
   <button id="muteBtn" onclick="toggleMute()" title="サウンドon/off">🔊</button>
 </div>
-<div class="version-badge">v1.58</div>
+<div class="version-badge">v1.59</div>
 <div class="footer">
   💡 猫を<b>ドラッグ</b>して入れ替え（クリック→隣をクリックでも可）／無操作が続くとヒント点滅にゃ
 </div>
@@ -1063,7 +1065,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
     <button class="title-btn" id="title-mute" onclick="toggleMute()">🔊 サウンド</button>
   </div>
   <div class="title-teaser">🌟 ステージ20をクリアすると…？ 🌟</div>
-  <div class="title-version">v1.58</div>
+  <div class="title-version">v1.59</div>
 </div>
 
 <div class="overlay" id="overlay">
@@ -2266,7 +2268,7 @@ async function stageClear() {
   }
 
   showOverlay(
-    `🎉 ステージ ${stage} クリアにゃー！！！`,
+    `🎉 ステージ ${stage}\nクリアにゃー！`,
     `${starsHTML(stars)}${missionDetailText()}<br>最終スコア: ${stageScore}<br>最高連鎖: ${comboText}`,
     '次のステージへ',
     () => { stage++; startStage(); }
