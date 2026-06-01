@@ -1029,7 +1029,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
   <button id="restartBtn" onclick="restartGame()">🔄 最初から</button>
   <button id="muteBtn" onclick="toggleMute()" title="サウンドon/off">🔊</button>
 </div>
-<div class="version-badge">v1.55</div>
+<div class="version-badge">v1.56</div>
 <div class="footer">
   💡 猫を<b>ドラッグ</b>して入れ替え（クリック→隣をクリックでも可）／無操作が続くとヒント点滅にゃ
 </div>
@@ -1050,7 +1050,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
     <button class="title-btn" onclick="showHelp(false)">📖 遊び方</button>
     <button class="title-btn" id="title-mute" onclick="toggleMute()">🔊 サウンド</button>
   </div>
-  <div class="title-version">v1.55</div>
+  <div class="title-version">v1.56</div>
 </div>
 
 <div class="overlay" id="overlay">
@@ -1068,6 +1068,8 @@ const ROWS = 8;
 const TYPES = 6;
 const SYMBOLS = ['😾', '😸', '😹', '😺', '😻', '🙀'];
 const COLORS = ['#e63946', '#fb8500', '#ffd60a', '#2dc653', '#2196f3', '#9d4edd'];
+// 注文ミッション用の色玉（赤/橙/黄/緑/青/紫）※COLORSと対応
+const COLOR_BALLS = ['🔴', '🟠', '🟡', '🟢', '🔵', '🟣'];
 
 const boardEl = document.getElementById('board');
 const stageEl = document.getElementById('stage');
@@ -2693,7 +2695,7 @@ function missionLabel() {
   if (mission.type === 'jelly') return `🟦 ゼリー <span>${totalJellyRemaining}</span>`;
   if (mission.type === 'ingredient') return `🎀 材料 <span>${ingredientsCollected}/${ingredientsToCollect}</span>`;
   if (mission.type === 'order') {
-    const parts = orders.map(o => `<span style="color:${COLORS[o.color]}">${SYMBOLS[o.color]}</span><b>${o.collected}/${o.target}</b>`);
+    const parts = orders.map(o => `${COLOR_BALLS[o.color]}<b>${o.collected}/${o.target}</b>`);
     return `集める ${parts.join(' ')}`;
   }
   return '';
@@ -2705,7 +2707,7 @@ function missionDetailText() {
   if (mission.type === 'jelly') return `<b>ゼリー</b>: すべて消去！`;
   if (mission.type === 'ingredient') return `<b>材料</b>: ${ingredientsCollected} / ${ingredientsToCollect} 収集`;
   if (mission.type === 'order') {
-    const parts = orders.map(o => `${SYMBOLS[o.color]} ${o.collected}/${o.target}`);
+    const parts = orders.map(o => `${COLOR_BALLS[o.color]} ${o.collected}/${o.target}`);
     return `<b>注文</b>: ${parts.join('、')}`;
   }
   return '';
@@ -2833,7 +2835,7 @@ function missionIntroText() {
     return `${syms.join('')} ${ingredientsToCollect}個 下まで落とすにゃ！`;
   }
   if (mission.type === 'order') {
-    const parts = orders.map(o => `${SYMBOLS[o.color]}×${o.target}`);
+    const parts = orders.map(o => `${COLOR_BALLS[o.color]}×${o.target}`);
     return `😻 集めるにゃ！ ${parts.join(' ')}`;
   }
   return '';
