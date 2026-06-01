@@ -424,13 +424,13 @@ body {
 
 /* スター評価表示 */
 .stage-stars {
-  font-size: 2.6em;
+  font-size: 1.9em;
   margin: 10px 0 16px;
-  letter-spacing: 10px;
+  letter-spacing: 2px;
   filter: drop-shadow(0 0 14px gold);
   display: flex;
   justify-content: center;
-  gap: 8px;
+  gap: 4px;
 }
 .stage-stars .star {
   display: inline-block;
@@ -439,8 +439,10 @@ body {
   transform: scale(0);
 }
 .stage-stars .star.s1 { animation-delay: 0.1s; }
-.stage-stars .star.s2 { animation-delay: 0.35s; }
-.stage-stars .star.s3 { animation-delay: 0.6s; }
+.stage-stars .star.s2 { animation-delay: 0.28s; }
+.stage-stars .star.s3 { animation-delay: 0.46s; }
+.stage-stars .star.s4 { animation-delay: 0.64s; }
+.stage-stars .star.s5 { animation-delay: 0.82s; }
 .stage-stars .star.empty { color: rgba(255,255,255,0.25); filter: none; }
 @keyframes starPop {
   0%   { opacity: 0; transform: scale(0) rotate(-180deg); }
@@ -1043,7 +1045,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
   <button id="restartBtn" onclick="restartGame()">🔄 最初から</button>
   <button id="muteBtn" onclick="toggleMute()" title="サウンドon/off">🔊</button>
 </div>
-<div class="version-badge">v1.61</div>
+<div class="version-badge">v1.62</div>
 <div class="footer">
   💡 猫を<b>ドラッグ</b>して入れ替え（クリック→隣をクリックでも可）／無操作が続くとヒント点滅にゃ
 </div>
@@ -1065,7 +1067,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
     <button class="title-btn" id="title-mute" onclick="toggleMute()">🔊 サウンド</button>
   </div>
   <div class="title-teaser">🌟 ステージ20をクリアすると…？ 🌟</div>
-  <div class="title-version">v1.61</div>
+  <div class="title-version">v1.62</div>
 </div>
 
 <div class="overlay" id="overlay">
@@ -2233,19 +2235,23 @@ function checkStageEnd() {
 function computeStars() {
   if (!mission) return 1;
   if (mission.type === 'score') {
-    if (stageScore >= target * 2.5) return 3;
-    if (stageScore >= target * 1.5) return 2;
+    if (stageScore >= target * 3.0) return 5;
+    if (stageScore >= target * 2.2) return 4;
+    if (stageScore >= target * 1.6) return 3;
+    if (stageScore >= target * 1.2) return 2;
     return 1;
   }
   const ratio = (movesLimit - movesUsed) / movesLimit;
-  if (ratio >= 0.4) return 3;
-  if (ratio >= 0.15) return 2;
+  if (ratio >= 0.45) return 5;
+  if (ratio >= 0.30) return 4;
+  if (ratio >= 0.18) return 3;
+  if (ratio >= 0.08) return 2;
   return 1;
 }
 
 function starsHTML(n) {
   let html = '<div class="stage-stars">';
-  for (let i = 1; i <= 3; i++) {
+  for (let i = 1; i <= 5; i++) {
     if (i <= n) html += `<span class="star s${i}">⭐</span>`;
     else html += `<span class="star empty s${i}">☆</span>`;
   }
