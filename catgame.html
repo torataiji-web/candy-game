@@ -1029,7 +1029,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
   <button id="restartBtn" onclick="restartGame()">🔄 最初から</button>
   <button id="muteBtn" onclick="toggleMute()" title="サウンドon/off">🔊</button>
 </div>
-<div class="version-badge">v1.56</div>
+<div class="version-badge">v1.57</div>
 <div class="footer">
   💡 猫を<b>ドラッグ</b>して入れ替え（クリック→隣をクリックでも可）／無操作が続くとヒント点滅にゃ
 </div>
@@ -1050,7 +1050,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
     <button class="title-btn" onclick="showHelp(false)">📖 遊び方</button>
     <button class="title-btn" id="title-mute" onclick="toggleMute()">🔊 サウンド</button>
   </div>
-  <div class="title-version">v1.56</div>
+  <div class="title-version">v1.57</div>
 </div>
 
 <div class="overlay" id="overlay">
@@ -2084,12 +2084,16 @@ async function trySwap(a, b) {
       (grid[b.r][b.c] && grid[b.r][b.c].jellyTrapped)) {
     return;
   }
+  // 材料（🎀🥛）は完全固定: スワップ一切不可（重力で落とすのみ）
+  if ((grid[a.r][a.c] && grid[a.r][a.c].ingredient) ||
+      (grid[b.r][b.c] && grid[b.r][b.c].ingredient)) {
+    return;
+  }
   busy = true;
   playSwap();
   const ca = grid[a.r][a.c];
   const cb = grid[b.r][b.c];
-  const ingredientSwap = ca.ingredient || cb.ingredient;
-  const combo = !ingredientSwap ? detectSpecialCombo(ca, cb) : null;
+  const combo = detectSpecialCombo(ca, cb);
 
   if (combo) {
     swapCells(a, b);
@@ -2115,7 +2119,7 @@ async function trySwap(a, b) {
   swapCells(a, b);
   await sleep(280);
 
-  // 材料スワップも通常スワップと同様、マッチが成立しなければ無効（元に戻す）
+  // マッチが成立しないスワップは無効（元に戻す）
   if (findMatchedCells().size === 0) {
     swapCells(a, b);
     await sleep(280);
@@ -2406,7 +2410,7 @@ function showHelp(isFirstTime) {
       <p>4種類のクリア条件が <b>ステージごとに循環</b> します:</p>
       <p>・<b>🎯 スコア</b>: 指定ポイントを稼ぐにゃ</p>
       <p>・<b>🟦 ゼリー消去</b>: ゼリーの中の猫は<b>動かせないけど、同じ色のマッチには参加する</b>にゃ！中の猫を含む3個以上の同色マッチで殻が1段ダメージ。<b>特殊もるちゃんの効果</b>でも殻が割れる。濃い青は2回当てないと消えない。盤面の全ゼリーを破壊すればクリア！</p>
-      <p>・<b>🎀 材料</b>: 🎀🥛を最下段まで落として収集する（特殊もるちゃんの爆発でも消えないにゃ）</p>
+      <p>・<b>🎀 材料</b>: 🎀🥛は<b>動かせない</b>にゃ。<b>下の猫を消して重力で落とし</b>、最下段まで届けて収集する（特殊もるちゃんの爆発でも消えないにゃ）</p>
       <p>・<b>🎨 注文</b>: 指定された色の猫を指定匹数消すにゃ</p>
       <p>どのミッションも <b>残り手数</b> 以内に達成すれば次のステージへ。失敗なら <b>コンティニュー（+5手）</b> または ゲームオーバーにゃ。コンティニューすると<b>ストライプもるちゃんが1つ</b>もらえて立て直しやすいにゃ！</p>
 
