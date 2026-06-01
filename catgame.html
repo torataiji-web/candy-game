@@ -1045,7 +1045,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
   <button id="restartBtn" onclick="restartGame()">🔄 最初から</button>
   <button id="muteBtn" onclick="toggleMute()" title="サウンドon/off">🔊</button>
 </div>
-<div class="version-badge">v1.63</div>
+<div class="version-badge">v1.64</div>
 <div class="footer">
   💡 猫を<b>ドラッグ</b>して入れ替え（クリック→隣をクリックでも可）／無操作が続くとヒント点滅にゃ
 </div>
@@ -1067,7 +1067,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
     <button class="title-btn" id="title-mute" onclick="toggleMute()">🔊 サウンド</button>
   </div>
   <div class="title-teaser">🌟 ステージ20をクリアすると…？ 🌟</div>
-  <div class="title-version">v1.63</div>
+  <div class="title-version">v1.64</div>
 </div>
 
 <div class="overlay" id="overlay">
@@ -1192,6 +1192,8 @@ function onCandyClick(el) {
   if (grid[pos.r][pos.c] && grid[pos.r][pos.c].ingredient) return;
   // ゼリーで閉じ込められた猫は選択不可
   if (grid[pos.r][pos.c] && grid[pos.r][pos.c].jellyTrapped) return;
+  // ネズミ等の障害物は選択不可（動かせない）
+  if (grid[pos.r][pos.c] && grid[pos.r][pos.c].obstacle) return;
 
   if (!selected) {
     selected = pos;
@@ -2104,6 +2106,11 @@ async function trySwap(a, b) {
   // 材料（🎀🥛）は完全固定: スワップ一切不可（重力で落とすのみ）
   if ((grid[a.r][a.c] && grid[a.r][a.c].ingredient) ||
       (grid[b.r][b.c] && grid[b.r][b.c].ingredient)) {
+    return;
+  }
+  // ネズミ等の障害物とのスワップは不可（動かせない）
+  if ((grid[a.r][a.c] && grid[a.r][a.c].obstacle) ||
+      (grid[b.r][b.c] && grid[b.r][b.c].obstacle)) {
     return;
   }
   busy = true;
@@ -3122,6 +3129,8 @@ function onBoardPointerDown(e) {
   if (grid[pos.r][pos.c] && grid[pos.r][pos.c].ingredient) return;
   // ゼリーで閉じ込められた猫はドラッグ不可
   if (grid[pos.r][pos.c] && grid[pos.r][pos.c].jellyTrapped) return;
+  // ネズミ等の障害物はドラッグ不可（動かせない）
+  if (grid[pos.r][pos.c] && grid[pos.r][pos.c].obstacle) return;
   cancelIdleAndHint();
   ensureAudio();
   if (audioCtx && audioCtx.state === 'suspended') {
