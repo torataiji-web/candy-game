@@ -1045,7 +1045,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
   <button id="restartBtn" onclick="restartGame()">🔄 最初から</button>
   <button id="muteBtn" onclick="toggleMute()" title="サウンドon/off">🔊</button>
 </div>
-<div class="version-badge">v1.64</div>
+<div class="version-badge">v1.65</div>
 <div class="footer">
   💡 猫を<b>ドラッグ</b>して入れ替え（クリック→隣をクリックでも可）／無操作が続くとヒント点滅にゃ
 </div>
@@ -1067,7 +1067,7 @@ button.primary:hover { background: linear-gradient(135deg, #ff8fdc, #b169f0); }
     <button class="title-btn" id="title-mute" onclick="toggleMute()">🔊 サウンド</button>
   </div>
   <div class="title-teaser">🌟 ステージ20をクリアすると…？ 🌟</div>
-  <div class="title-version">v1.64</div>
+  <div class="title-version">v1.65</div>
 </div>
 
 <div class="overlay" id="overlay">
@@ -2550,6 +2550,7 @@ function startStage() {
 
   busy = false;
   startIdleTimer();
+  if (typeof maybeApplyUpdate === 'function') maybeApplyUpdate(); // 新ステージ開始時(手数0)は安全な更新タイミング
 }
 
 function restartGame() {
@@ -3446,6 +3447,7 @@ function showTitle() {
     ng.style.display = 'none';
   }
   titleScreenEl.classList.add('show');
+  if (typeof maybeApplyUpdate === 'function') maybeApplyUpdate(); // タイトルは安全な更新タイミング
 }
 
 function _startAudioContext() {
@@ -3469,6 +3471,51 @@ function titleNewGame() {
   titleScreenEl.classList.remove('show');
   startStage();
 }
+
+// ===== 自動アップデート（フォアグラウンド復帰時に最新版を確認） =====
+let pendingUpdate = false;
+let lastVerCheck = 0;
+
+function currentVersion() {
+  const el = document.querySelector('.version-badge');
+  return el ? el.textContent.trim() : '';
+}
+
+// プレイを中断しない安全なタイミングか判定
+function isSafeToReload() {
+  if (busy) return false;
+  if (titleScreenEl && titleScreenEl.classList.contains('show')) return true; // タイトル
+  if (overlayEl.classList.contains('show')) return true;                       // クリア/GO/遊び方
+  if (movesUsed === 0) return true;                                            // まだ手を打っていない面
+  return false;
+}
+
+function maybeApplyUpdate() {
+  if (!pendingUpdate) return;
+  if (!isSafeToReload()) return;
+  // 強制キャッシュ回避リロードで最新版を取得
+  location.replace(location.pathname + '?t=' + Date.now());
+}
+
+async function checkForUpdate() {
+  const now = Date.now();
+  if (now - lastVerCheck < 60000) { maybeApplyUpdate(); return; } // 1分に1回まで
+  lastVerCheck = now;
+  try {
+    const res = await fetch(location.pathname + '?vc=' + now, { cache: 'no-store' });
+    if (!res.ok) return;
+    const text = await res.text();
+    const m = text.match(/version-badge">(v[\d.]+)</);
+    if (m && m[1] !== currentVersion()) {
+      pendingUpdate = true;
+    }
+  } catch (e) {}
+  maybeApplyUpdate();
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') checkForUpdate();
+});
 
 // 起動時はタイトル画面を表示（盤面はメニュー選択後に構築）
 showTitle();
