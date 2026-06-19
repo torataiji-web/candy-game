@@ -127,7 +127,9 @@
     will-change: transform;
   }
   .piece.black {
-    background: radial-gradient(circle at 35% 35%, #555, #111);
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='%23f5b8c8'%3E%3Cellipse cx='50' cy='64' rx='23' ry='19'/%3E%3Cellipse cx='27' cy='44' rx='9' ry='11.5'/%3E%3Cellipse cx='43' cy='29' rx='8.5' ry='11.5'/%3E%3Cellipse cx='62' cy='29' rx='8.5' ry='11.5'/%3E%3Cellipse cx='76' cy='44' rx='9' ry='11.5'/%3E%3C/g%3E%3C/svg%3E") center / 64% no-repeat,
+      radial-gradient(circle at 35% 35%, #555, #111);
     box-shadow: 2px 2px 5px rgba(0,0,0,0.6);
   }
   .piece.white {
